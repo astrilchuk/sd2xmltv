@@ -33,7 +33,6 @@ class Sd2Xmltv:
         #self._genre_config.read('./config/tvheadend.ini')
 
     def process(self):
-        # TODO: Display account expiry date
         # TODO: Add timezone to parsed datetime strings (maybe?)
         # TODO: Add xmltv tv element attributes
         # TODO: Convert type definitions from str to unicode
