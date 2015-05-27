@@ -121,7 +121,7 @@ class Sd2Xmltv:
             choice = raw_input('> ')
             if choice == 'x':
                 break
-            if choice == '1':
+            elif choice == '1':
                 self._list_subscribed_lineups()
             elif choice == '2':
                 self._add_lineup()
@@ -218,10 +218,6 @@ class Sd2Xmltv:
 
             for channel in lineup_mapping.channels:
                 print '%s\t%s.%s\t%s\t%s "%s"' % (channel.uhf_vhf, channel.atsc_major, channel.atsc_minor, channel.channel, channel.station.callsign, channel.station.name)
-
-            #print 'Are you sure you want to remove \'%s (%s)\'? (y/n)' % (lineup.name, lineup.location)
-            #if raw_input('> ') != 'y':
-            #    continue
 
     def _remove_lineup(self):
 

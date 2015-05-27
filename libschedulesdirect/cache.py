@@ -40,15 +40,11 @@ class SchedulesDirectCache:
 
     def init_database(self):
         self._logger.debug('init_database()')
-        self._cursor.execute(
-            '''CREATE TABLE IF NOT EXISTS lineups
+        self._db.execute('''CREATE TABLE IF NOT EXISTS lineups
                 (lineup_id TEXT PRIMARY KEY ON CONFLICT REPLACE, lineup_json TEXT, modified TEXT)''')
-        self._cursor.execute(
-            '''CREATE TABLE IF NOT EXISTS programs
+        self._db.execute('''CREATE TABLE IF NOT EXISTS programs
                 (program_id TEXT PRIMARY KEY ON CONFLICT REPLACE, program_json TEXT, program_hash TEXT)''')
-        self._cursor.execute(
-            '''CREATE TABLE IF NOT EXISTS schedules
-                (station_id TEXT, schedule_date TEXT, schedule_json TEXT, schedule_hash TEXT, PRIMARY KEY (station_id, schedule_date) ON CONFLICT REPLACE)''')
+        self._db.execute('VACUUM')
         self._db.commit()
 
     def get_lineup(self, lineup_id, modified):
@@ -68,26 +64,6 @@ class SchedulesDirectCache:
         lineup_json = json.dumps(lineup)
         self._cursor.execute('''INSERT INTO lineups (lineup_id, lineup_json, modified)
             VALUES (?, ?, ?)''', (lineup_id, lineup_json, modified))
-        self._db.commit()
-
-    def get_schedule(self, station_id, schedule_hash):
-        if self._logger.isEnabledFor(logging.DEBUG):
-            self._logger.debug('get_schedule("%s","%s")' % (station_id, schedule_hash))
-        self._cursor.execute('SELECT schedule_json FROM schedules WHERE station_id = ? AND schedule_hash = ?', (station_id, schedule_hash))
-        result = self._cursor.fetchone()
-        if result is None:
-            self._logger.debug('result: cache miss')
-            return None
-        result = json.loads(result[0])
-        self._logger.debug('result: cache hit')
-        return result
-
-    def add_schedule(self, station_id, schedule_date, schedule_hash, schedule):
-        if self._logger.isEnabledFor(logging.DEBUG):
-            self._logger.debug('add_schedule("%s", "%s", "%s", "%s")' % (station_id, schedule_date, schedule_hash, schedule))
-        schedule_json = json.dumps(schedule)
-        self._cursor.execute('''INSERT INTO schedules (station_id, schedule_date, schedule_json, schedule_hash)
-            VALUES (?, ?, ?, ?)''', (station_id, schedule_date, schedule_json, schedule_hash))
         self._db.commit()
 
     def get_program(self, program_id, program_hash=None):
@@ -110,12 +86,12 @@ class SchedulesDirectCache:
         result = self._cursor.fetchone()
         return result is not None
 
-    def add_program(self, program):
+    def add_programs(self, programs):
         if self._logger.isEnabledFor(logging.DEBUG):
-            self._logger.debug('add_program("%s")' % (program))
-        program_json = json.dumps(program)
-        self._cursor.execute('''INSERT INTO programs (program_id, program_json, program_hash)
-            VALUES (?, ?, ?)''', (program['programID'], program_json, program['md5']))
+            self._logger.debug('add_programs("%s")' % (programs))
+        to_insert = [(program['programID'], json.dumps(program), program['md5']) for program in programs]
+        self._db.executemany('''INSERT INTO programs (program_id, program_json, program_hash)
+            VALUES (?, ?, ?)''', to_insert)
         self._db.commit()
 
 if __name__ == "__main__":

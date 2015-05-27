@@ -126,8 +126,8 @@ class SchedulesDirect(object):
         for batch in enumerate_batch(program_ids, 5000):
             self._logger.info('Requesting %s programs from SchedulesDirect.' % (len(batch)))
             programs = self._api.get_programs(batch)
-            for program in programs:
-                self._cache.add_program(program)
+            self._logger.info('Adding program(s) to program cache.')
+            self._cache.add_programs(programs)
             self._logger.info('Added %s program(s) to program cache.' % (len(programs)))
 
     def get_program(self, program_id, md5=None):
