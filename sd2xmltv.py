@@ -143,12 +143,16 @@ class Sd2Xmltv:
     def _add_lineup(self):
         while True:
             print '\nAdd Lineup\n'
-            print 'Enter zip or postal code or \'x\' to cancel:'
+            print 'Enter 5-digit zip or postal code or \'x\' to cancel:'
             postal_code = raw_input('> ')
             if postal_code == 'x':
                 break
 
-            headends = self._sd.get_headends_by_postal_code('CAN', postal_code)
+            country = 'USA'
+            if postal_code[0].isalpha():
+                country = 'CAN'
+
+            headends = self._sd.get_headends_by_postal_code(country, postal_code)
 
             while True:
                 subscribed_lineups = self._sd.get_subscribed_lineups()
