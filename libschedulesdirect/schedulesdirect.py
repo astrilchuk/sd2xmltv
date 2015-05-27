@@ -3,12 +3,12 @@
 
 from api import SchedulesDirectApi
 from cache import SchedulesDirectCache
-from common import Status, Token, Lineup, Program, Schedule, Headend
+from common import Status, Token, LineupMapping, Program, Schedule, Headend, Lineup, AddRemoveLineupResponse
 import logging
 
 class SchedulesDirect(object):
 
-    def __init__(self, username, password, cache_path = './cache/sdcache.db'):
+    def __init__(self, username, password, cache_path = './sdcache.db'):
         self._logger = logging.getLogger(__name__)
         self._username = username
         self._password = password
@@ -16,8 +16,8 @@ class SchedulesDirect(object):
         self._cache = SchedulesDirectCache(cache_path)
         self._cache.init_database()
         self._force_lineup_refresh = False
-        self._force_schedule_refresh = False
         self._force_program_refresh = False
+        self._subscribed_lineups = None
 
     def get_token(self):
         self._api.get_token()
@@ -28,7 +28,7 @@ class SchedulesDirect(object):
     def is_online(self):
         return self._api.is_online()
 
-    def get_headend_by_postal_code(self, country, postal_code):
+    def get_headends_by_postal_code(self, country, postal_code):
         """
 
         :param country:
@@ -38,33 +38,65 @@ class SchedulesDirect(object):
         """
         headends = []
         headends_dict = self._api.get_headends_by_postal_code(country, postal_code)
-        for (key, item) in headends_dict.items():
-            headends.append(Headend.decode(key, item))
+        for headend in headends_dict:
+            headends.append(Headend.decode(headend))
 
         return headends
 
-    def get_lineups(self, status_lineups):
+    def get_subscribed_lineups(self):
+        """
+
+        :return:
+        :rtype: list of [Lineup]
+        """
+        if self._subscribed_lineups is not None:
+            return self._subscribed_lineups
+        self._subscribed_lineups = []
+        lineups_dict = self._api.get_subscribed_lineups()
+        for lineup_dict in lineups_dict:
+            self._subscribed_lineups.append(Lineup.decode(lineup_dict))
+
+        return self._subscribed_lineups
+
+    def add_lineup(self, lineup_id):
+        response = self._api.add_lineup(lineup_id)
+        self._subscribed_lineups = None
+        return AddRemoveLineupResponse.decode(response)
+
+    def remove_lineup(self, lineup_id):
+        response = self._api.remove_lineup(lineup_id)
+        self._subscribed_lineups = None
+        return AddRemoveLineupResponse.decode(response)
+
+    def get_lineup_mapping(self, lineup_id, modified=None):
+        lineup_mapping = None
+
+        if not self._force_lineup_refresh and modified is not None:
+            lineup_mapping = self._cache.get_lineup(lineup_id, modified.strftime('%Y-%m-%dT%H:%M:%SZ'))
+
+        if lineup_mapping is None:
+            lineup_mapping = self._api.get_lineup(lineup_id)
+            self._cache.add_lineup(lineup_id, lineup_mapping['metadata']['modified'], lineup_mapping)
+
+        return LineupMapping.decode(lineup_mapping)
+
+    def get_lineup_mappings(self, status_lineups):
         """
 
         :param status_lineups:
         :return:
-        :rtype: list of [Lineup]
+        :rtype: list of [LineupMapping]
         """
-        lineups = []
+        lineup_mappings = []
 
         if self._force_lineup_refresh:
             self._logger.info('WARNING: Force refreshing lineups.')
 
-        for (id, modified) in status_lineups:
-            lineup = None
-            if not self._force_lineup_refresh:
-                lineup = self._cache.get_lineup(id, modified.strftime('%Y-%m-%dT%H:%M:%SZ'))
-            if lineup is None:
-                lineup = self._api.get_lineup(id)
-                self._cache.add_lineup(id, lineup['metadata']['modified'], lineup)
-            lineups.append(Lineup.decode(lineup))
+        for (lineup_id, modified) in status_lineups:
+            lineup_mapping = self.get_lineup_mapping(lineup_id, modified)
+            lineup_mappings.append(lineup_mapping)
 
-        return lineups
+        return lineup_mappings
 
     def cache_programs(self, programs):
         """
@@ -86,7 +118,7 @@ class SchedulesDirect(object):
             if self._force_program_refresh or not self._cache.program_exists(program_id, md5):
                 program_ids.add(program_id)
 
-        self._logger.debug('Found %s program(s) missing from cache.' % (len(program_ids)))
+        self._logger.info('Found %s program(s) missing from cache.' % (len(program_ids)))
 
         if len(program_ids) == 0:
             return
@@ -104,42 +136,25 @@ class SchedulesDirect(object):
             return None
         return Program.decode(program)
 
-    def get_schedules(self, station_ids, days):
+    def get_schedules(self, station_ids, dates=None):
         """
 
         :param station_ids:
         :type station_ids: list of [str]
-        :param days:
-        :type days: int
         :return:
         :rtype: list of [Schedule]
         """
-        self._logger.debug('_get_schedules(%s, %s)' % (station_ids, days))
+        self._logger.debug('_get_schedules("%s","%s")' % (station_ids, dates))
         schedules = []
 
-        station_days_request = [{'stationID':station, 'days':days} for station in station_ids]
-        schedule_md5s = self._api.get_schedule_md5s(station_days_request)
+        if dates is None:
+            schedules_request = [{'stationID':station} for station in station_ids]
+        else:
+            schedules_request = [{'stationID':station, 'date':dates} for station in station_ids]
 
-        if self._logger.isEnabledFor(logging.DEBUG):
-            self._logger.debug(schedule_md5s)
+        schedules_response = self._api.get_schedules(schedules_request)
 
-        if self._force_schedule_refresh:
-            self._logger.info('WARNING: Force refreshing schedules.')
-
-        if not self._force_schedule_refresh:
-            for station_id, value in schedule_md5s.items():
-                schedule = self._cache.get_schedule(station_id, days, value[0]['md5'])
-                if schedule is not None:
-                    schedule = Schedule.decode(schedule)
-                    schedules.append(schedule)
-                    station_days_request = [station_day for station_day in station_days_request if station_day['stationID'] != schedule.station_id]
-
-        if len(station_days_request) == 0:
-            return schedules
-
-        result = self._api.get_schedules(station_days_request)
-        for schedule in result:
-            self._cache.add_schedule(schedule['stationID'], days, schedule['metadata']['md5'], schedule)
+        for schedule in schedules_response:
             schedules.append(Schedule.decode(schedule))
 
         return schedules

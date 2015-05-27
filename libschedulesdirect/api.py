@@ -15,10 +15,9 @@ class SchedulesDirectApi:
         self._username = username
         self._password_hash = hashlib.sha1(password).hexdigest()
         self._base_url = 'https://json.schedulesdirect.org'
-        self._base_uri = '/20140530/'
+        self._base_uri = '/20141201/'
         self._token = None
         self._status = None
-        self._lineups = None
 
     def get_token(self):
         self._logger.debug('get_token()')
@@ -55,6 +54,16 @@ class SchedulesDirectApi:
         response = self._get_json_response(request)
         return response
 
+    def get_subscribed_lineups(self):
+        self._logger.debug('get_lineups()')
+        self._validate_online()
+        request = self._get_token_request('GET', 'lineups')
+        response = self._get_json_response(request)
+        if 'response' in response and response['response'] == 'NO_LINEUPS':
+            return []
+        lineups = response["lineups"]
+        return lineups
+
     def add_lineup(self, lineup_id):
         self._logger.debug('add_lineup("%s")' % (lineup_id))
         self._validate_online()
@@ -62,15 +71,12 @@ class SchedulesDirectApi:
         response = self._get_json_response(request)
         return response
 
-    def get_subscribed_lineups(self):
-        self._logger.debug('get_lineups()')
+    def remove_lineup(self, lineup_id):
+        self._logger.debug('remove_lineup("%s")' % (lineup_id))
         self._validate_online()
-        if self._lineups is not None:
-            return self._lineups
-        request = self._get_token_request('GET', 'lineups')
+        request = self._get_token_request('DELETE', 'lineups/' + lineup_id)
         response = self._get_json_response(request)
-        self._lineups = response["lineups"]
-        return self._lineups
+        return response
 
     def get_lineup(self, lineup_id):
         self._logger.debug('get_lineup("%s")' % (lineup_id))
@@ -79,51 +85,12 @@ class SchedulesDirectApi:
         response = self._get_json_response(request)
         return response
 
-    def get_schedule_md5s(self, stations):
-        """
-        Gets schedule md5s in the format:
-        {
-            "10036": [
-                {
-                    "days": 13,
-                    "md5": "StiEox/4JyAHD4lUvrMCIQ",
-                    "modified": "2014-09-18T20:59:07Z"
-                }
-            ],
-            "10091": [
-                {
-                    "days": 2,
-                    "md5": "Ei1DujpwycpFBPXK6fXzjw",
-                    "modified": "2014-09-18T20:59:07Z"
-                },
-                {
-                    "days": 4,
-                    "md5": "+Yqb0vg+0ZeMm7Jttbapcw",
-                    "modified": "2014-09-18T20:59:08Z"
-                },
-                {
-                    "days": 13,
-                    "md5": "x9PdBejLYqJmytIHePhWlw",
-                    "modified": "2014-09-18T20:59:08Z"
-                }
-            ]
-        }
-        :param stations:
-        :return:
-        """
-        if self._logger.isEnabledFor(logging.DEBUG):
-            self._logger.debug('get_schedule_md5s("%s")' % (stations))
-        self._validate_online()
-        request = self._get_token_request('POST', 'schedules/md5', stations)
-        response = self._get_json_response(request)
-        return response
-
     def get_schedules(self, stations):
         if self._logger.isEnabledFor(logging.DEBUG):
             self._logger.debug('get_schedules("%s")' % (stations))
         self._validate_online()
         request = self._get_token_request('POST', 'schedules', stations)
-        response = self._get_delimited_json_response(request)
+        response = self._get_json_response(request)
         return response
 
     def get_programs(self, program_ids):
@@ -131,7 +98,7 @@ class SchedulesDirectApi:
             self._logger.debug('get_programs(%s)' % (program_ids))
         self._validate_online()
         request = self._get_token_request('POST', 'programs', program_ids)
-        response = self._get_delimited_json_response(request)
+        response = self._get_json_response(request)
         return response
 
     def _get_request(self, method, uri, post_data = None):
@@ -182,7 +149,9 @@ class SchedulesDirectApi:
         try:
             response = opener.open(request)
         except urllib2.HTTPError, error:
-            self._logger.error(error.read())
+            error = error.read()
+            self._logger.error(error)
+            return error
         raw_data = response.read()
         if response.headers.get('content-encoding', '') == 'gzip':
             raw_data = StringIO.StringIO(raw_data)

@@ -48,7 +48,7 @@ class SchedulesDirectCache:
                 (program_id TEXT PRIMARY KEY ON CONFLICT REPLACE, program_json TEXT, program_hash TEXT)''')
         self._cursor.execute(
             '''CREATE TABLE IF NOT EXISTS schedules
-                (station_id TEXT PRIMARY KEY ON CONFLICT REPLACE, days INTEGER, schedule_json TEXT, schedule_hash TEXT)''')
+                (station_id TEXT, schedule_date TEXT, schedule_json TEXT, schedule_hash TEXT, PRIMARY KEY (station_id, schedule_date) ON CONFLICT REPLACE)''')
         self._db.commit()
 
     def get_lineup(self, lineup_id, modified):
@@ -70,10 +70,10 @@ class SchedulesDirectCache:
             VALUES (?, ?, ?)''', (lineup_id, lineup_json, modified))
         self._db.commit()
 
-    def get_schedule(self, station_id, days, schedule_hash):
+    def get_schedule(self, station_id, schedule_hash):
         if self._logger.isEnabledFor(logging.DEBUG):
-            self._logger.debug('get_schedule("%s",%s,"%s")' % (station_id, str(days), schedule_hash))
-        self._cursor.execute('SELECT schedule_json FROM schedules WHERE station_id = ? AND days = ? AND schedule_hash = ?', (station_id, days, schedule_hash))
+            self._logger.debug('get_schedule("%s","%s")' % (station_id, schedule_hash))
+        self._cursor.execute('SELECT schedule_json FROM schedules WHERE station_id = ? AND schedule_hash = ?', (station_id, schedule_hash))
         result = self._cursor.fetchone()
         if result is None:
             self._logger.debug('result: cache miss')
@@ -82,12 +82,12 @@ class SchedulesDirectCache:
         self._logger.debug('result: cache hit')
         return result
 
-    def add_schedule(self, station_id, days, schedule_hash, schedule):
+    def add_schedule(self, station_id, schedule_date, schedule_hash, schedule):
         if self._logger.isEnabledFor(logging.DEBUG):
-            self._logger.debug('add_schedule("%s", %s, "%s", "%s")' % (station_id, str(days), schedule_hash, schedule))
+            self._logger.debug('add_schedule("%s", "%s", "%s", "%s")' % (station_id, schedule_date, schedule_hash, schedule))
         schedule_json = json.dumps(schedule)
-        self._cursor.execute('''INSERT INTO schedules (station_id, days, schedule_json, schedule_hash)
-            VALUES (?, ?, ?, ?)''', (station_id, days, schedule_json, schedule_hash))
+        self._cursor.execute('''INSERT INTO schedules (station_id, schedule_date, schedule_json, schedule_hash)
+            VALUES (?, ?, ?, ?)''', (station_id, schedule_date, schedule_json, schedule_hash))
         self._db.commit()
 
     def get_program(self, program_id, program_hash=None):

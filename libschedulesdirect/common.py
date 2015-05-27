@@ -10,13 +10,13 @@ class Token(object):
         """:type: int"""
 
         self.message = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.server_id = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.token = None
-        """:type: str"""
+        """:type: unicode"""
 
     @staticmethod
     def decode(dct):
@@ -57,13 +57,10 @@ class StatusAccount(object):
         """:type: datetime"""
 
         self.messages = None
-        """:type: list of [str]"""
+        """:type: list of [unicode]"""
 
         self.max_lineups = None
         """:type: int"""
-
-        self.next_suggested_connect_time = None
-        """:type: datetime"""
 
     @staticmethod
     def decode(dct):
@@ -88,55 +85,11 @@ class StatusAccount(object):
             status_account.max_lineups = dct['maxLineups']
             del dct['maxLineups']
 
-        if 'nextSuggestedConnectTime' in dct:
-            status_account.next_suggested_connect_time = parse_datetime(dct['nextSuggestedConnectTime'])
-            del dct['nextSuggestedConnectTime']
-
         if len(dct) != 0:
             for key in dct.keys():
                 logging.warn('Key not processed for StatusAccount: ' + key)
 
         return status_account
-
-class StatusLineup(object):
-    def __init__(self):
-        self.id = None
-        """:type: str"""
-
-        self.modified = None
-        """:type: datetime"""
-
-        self.uri = None
-        """:type: str"""
-
-    @staticmethod
-    def decode(dct):
-        """
-
-        :param dct:
-        :type dct: dict
-        :return:
-        :rtype: StatusLineup
-        """
-        status_lineup = StatusLineup()
-
-        if 'ID' in dct:
-            status_lineup.id = dct['ID']
-            del dct['ID']
-
-        if 'modified' in dct:
-            status_lineup.modified = parse_datetime(dct['modified'])
-            del dct['modified']
-
-        if 'uri' in dct:
-            status_lineup.uri = dct['uri']
-            del dct['uri']
-
-        if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for StatusLineup: ' + key)
-
-        return status_lineup
 
 class StatusSystem(object):
     def __init__(self):
@@ -147,6 +100,9 @@ class StatusSystem(object):
         """:type: unicode"""
 
         self.status = None
+        """:type: unicode"""
+
+        self.message = None
         """:type: unicode"""
 
     @staticmethod
@@ -165,9 +121,13 @@ class StatusSystem(object):
             system_status.status = dct['status']
             del dct['status']
 
+        if 'message' in dct:
+            system_status.message = dct['message']
+            del dct['message']
+
         if len(dct) != 0:
             for key in dct.keys():
-                logging.warn('Key not processed for SystemStatus: ' + key)
+                logging.warn('Key not processed for StatusSystem: ' + key)
 
         return system_status
 
@@ -177,19 +137,19 @@ class Status(object):
         """:type: StatusAccount"""
 
         self.lineups = []
-        """:type: list of [StatusLineup]"""
+        """:type: list of [Lineup]"""
 
         self.last_data_update = None
         """:type: datetime"""
 
         self.notifications = []
-        """:type: list of [str]"""
+        """:type: list of [unicode]"""
 
         self.system_status = None
         """:type: StatusSystem"""
 
         self.server_id = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.code = None
         """:type: int"""
@@ -211,7 +171,7 @@ class Status(object):
 
         if 'lineups' in dct:
             for lineup in dct['lineups']:
-                status.lineups.append(StatusLineup.decode(lineup))
+                status.lineups.append(Lineup.decode(lineup))
             del dct['lineups']
 
         if 'lastDataUpdate' in dct:
@@ -241,19 +201,31 @@ class Status(object):
 
         return status
 
-class HeadendLineup(object):
+class AddRemoveLineupResponse(object):
     def __init__(self):
-        self.name = None
+        self.response = None
         """:type: unicode"""
 
-        self.uri = None
+        self.code = None
+        """:type: int"""
+
+        self.server_id = None
         """:type: unicode"""
+
+        self.message = None
+        """:type: unicode"""
+
+        self.changes_remaining = None
+        """:type: int"""
+
+        self.date_time = None
+        """:type: datetime"""
 
     def __str__(self):
-        return self.name
+        return self.message
 
     def __unicode__(self):
-        return self.name
+        return self.message
 
     @staticmethod
     def decode(dct):
@@ -262,44 +234,127 @@ class HeadendLineup(object):
         :param dct:
         :return:
         """
-        headend_lineup = HeadendLineup()
+        add_remove_lineup_response = AddRemoveLineupResponse()
+
+        if 'response' in dct:
+            add_remove_lineup_response.response = dct['response']
+            del dct['response']
+
+        if 'code' in dct:
+            add_remove_lineup_response.code = dct['code']
+            del dct['code']
+
+        if 'serverID' in dct:
+            add_remove_lineup_response.server_id = dct['serverID']
+            del dct['serverID']
+
+        if 'message' in dct:
+            add_remove_lineup_response.message = dct['message']
+            del dct['message']
+
+        if 'changesRemaining' in dct:
+            add_remove_lineup_response.changes_remaining = dct['changesRemaining']
+            del dct['changesRemaining']
+
+        if 'datetime' in dct:
+            add_remove_lineup_response.date_time = parse_datetime(dct['datetime'])
+            del dct['datetime']
+
+        if len(dct) != 0:
+            for key in dct.keys():
+                logging.warn('Key not processed for AddLineupResponse: ' + key)
+
+        return add_remove_lineup_response
+
+class Lineup(object):
+    def __init__(self):
+        self.lineup_id = None
+        """:type: unicode"""
+
+        self.name = None
+        """:type: unicode"""
+
+        self.transport = None
+        """:type: unicode"""
+
+        self.location = None
+        """:type: unicode"""
+
+        self.modified = None
+        """:type: datetime"""
+
+        self.uri = None
+        """:type: unicode"""
+
+    def __str__(self):
+        return self.lineup_id
+
+    def __unicode__(self):
+        return self.lineup_id
+
+    @staticmethod
+    def decode(dct):
+        """
+
+        :param dct:
+        :return:
+        """
+        lineup = Lineup()
+
+        if 'lineup' in dct:
+            lineup.lineup_id = dct['lineup']
+            del dct['lineup']
 
         if 'name' in dct:
-            headend_lineup.name = dct['name']
+            lineup.name = dct['name']
             del dct['name']
 
+        if 'transport' in dct:
+            lineup.transport = dct['transport']
+            del dct['transport']
+
+        if 'location' in dct:
+            lineup.location = dct['location']
+            del dct['location']
+
+        if 'modified' in dct:
+            lineup.modified = parse_datetime(dct['modified'])
+            del dct['modified']
+
         if 'uri' in dct:
-            headend_lineup.uri = dct['uri']
+            lineup.uri = dct['uri']
+            if lineup.lineup_id is None:
+                lineup.lineup_id = lineup.uri.split('/')[3]
             del dct['uri']
 
         if len(dct) != 0:
             for key in dct.keys():
-                logging.warn('Key not processed for HeadendLineup: ' + key)
+                logging.warn('Key not processed for Lineup: ' + key)
 
-        return headend_lineup
+        return lineup
 
 class Headend(object):
     def __init__(self):
         self.headend_id = None
         """:type: unicode"""
 
-        self.type = None
+        self.transport = None
         """:type: unicode"""
 
         self.location = None
         """:type: unicode"""
 
         self.lineups = []
-        """:type: list of [HeadendLineup]"""
+        """:type: list of [Lineup]"""
 
     def __str__(self):
-        return '{0} / {1} / {2}'.format(self.headend_id, self.type, self.location)
+        return '{0} / {1} / {2}'.format(self.headend_id, self.transport, self.location)
 
     def __unicode__(self):
-        return '{0} / {1} / {2}'.format(self.headend_id, self.type, self.location)
+        return '{0} / {1} / {2}'.format(self.headend_id, self.transport, self.location)
 
     @staticmethod
-    def decode(headend_id, dct):
+    def decode(dct):
         """
 
         :param headend_id:
@@ -308,11 +363,13 @@ class Headend(object):
         """
         headend = Headend()
 
-        headend.headend_id = headend_id
+        if 'headend' in dct:
+            headend.headend_id = dct['headend']
+            del dct['headend']
 
-        if 'type' in dct:
-            headend.type = dct['type']
-            del dct['type']
+        if 'transport' in dct:
+            headend.type = dct['transport']
+            del dct['transport']
 
         if 'location' in dct:
             headend.location = dct['location']
@@ -320,7 +377,7 @@ class Headend(object):
 
         if 'lineups' in dct:
             for lineup in dct['lineups']:
-                headend.lineups.append(HeadendLineup.decode(lineup))
+                headend.lineups.append(Lineup.decode(lineup))
             del dct['lineups']
 
         if len(dct) != 0:
@@ -329,7 +386,7 @@ class Headend(object):
 
         return headend
 
-class Lineup(object):
+class LineupMapping(object):
     def __init__(self):
         self.channels = []
         """:type: list of [Channel]"""
@@ -338,9 +395,12 @@ class Lineup(object):
         """:type: list of [Station]"""
 
         self.metadata = None
-        """:type: LineupMetadata"""
+        """:type: Lineup"""
 
     def __str__(self):
+        return self.metadata.lineup_id
+
+    def __unicode__(self):
         return self.metadata.lineup_id
 
     @staticmethod
@@ -352,32 +412,32 @@ class Lineup(object):
         :return:
         :rtype: Lineup
         """
-        lineup = Lineup()
+        lineup_mapping = LineupMapping()
 
         if 'stations' in dct:
             for station in dct['stations']:
-                lineup.stations.append(Station.decode(station))
+                lineup_mapping.stations.append(Station.decode(station))
             del dct['stations']
 
         if 'map' in dct:
             for channel in dct['map']:
                 channel = Channel.decode(channel)
-                channel.lineup = lineup
-                lineup.channels.append(channel)
+                channel.lineup_mapping = lineup_mapping
+                lineup_mapping.channels.append(channel)
             del dct['map']
 
-        for channel in lineup.channels:
-            channel.station = lineup.get_station(channel.station_id)
+        for channel in lineup_mapping.channels:
+            channel.station = lineup_mapping.get_station(channel.station_id)
 
         if 'metadata' in dct:
-            lineup.metadata = LineupMetadata.decode(dct['metadata'])
+            lineup_mapping.lineup = Lineup.decode(dct['metadata'])
             del dct['metadata']
 
         if len(dct) != 0:
             for key in dct.keys():
-                logging.warn('Key not processed for Lineup: ' + key)
+                logging.warn('Key not processed for LineupMapping: ' + key)
 
-        return lineup
+        return lineup_mapping
 
     def get_station(self, station_id):
         """
@@ -392,51 +452,23 @@ class Lineup(object):
             return None
         return matches[0]
 
-class LineupMetadata(object):
-    def __init__(self):
-        self.lineup_id = None
-        """:type : str"""
-
-        self.modified = None
-        """:type : datetime"""
-
-        self.transport = None
-        """:type : str"""
-
-    @staticmethod
-    def decode(dct):
-        """
-
-        :param dct:
-        :type dct: dict
-        :return:
-        :rtype: LineupMetadata
-        """
-        lineup_metadata = LineupMetadata()
-
-        if 'lineup' in dct:
-            lineup_metadata.lineup_id = dct['lineup']
-            del dct['lineup']
-
-        if 'modified' in dct:
-            lineup_metadata.modified = parse_datetime(dct['modified'])
-            del dct['modified']
-
-        if 'transport' in dct:
-            lineup_metadata.transport = dct['transport']
-            del dct['transport']
-
-        if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for LineupMetadata: ' + key)
-
-        return lineup_metadata
-
 class Channel(object):
     def __init__(self):
-        self.channel = None
-        """:type: str"""
 
+        # Common
+        self.station_id = None
+        """:type: unicode"""
+
+        self.station = None
+        """:type: Station"""
+
+        self.channel = None
+        """:type: unicode"""
+
+        self.lineup_mapping = None
+        """:type: LineupMapping"""
+
+        # Antenna
         self.atsc_major = None
         """:type: int"""
 
@@ -446,14 +478,34 @@ class Channel(object):
         self.uhf_vhf = None
         """:type: int"""
 
-        self.station_id = None
-        """:type: str"""
+        # DVB-T/C/S
 
-        self.station = None
-        """:type: Station"""
+        self.frequency_hz = None
+        """:type: int"""
 
-        self.lineup = None
-        """:type: Lineup"""
+        self.delivery_system = None
+        """:type: unicode"""
+
+        self.modulation_system = None
+        """:type: unicode"""
+
+        self.symbol_rate = None
+        """:type: int"""
+
+        self.service_id = None
+        """:type: int"""
+
+        self.network_id = None
+        """:type: int"""
+
+        self.transport_id = None
+        """:type: int"""
+
+        self.polarization = None
+        """:type: unicode"""
+
+        self.fec = None
+        """:type: unicode"""
 
     def get_display_names(self):
         if self.atsc_major is not None:
@@ -472,14 +524,7 @@ class Channel(object):
 
     # TODO: Xmltv specific, move out of schedulesdirect
     def get_unique_id(self):
-        id = None
-        if self.atsc_major is not None:
-            id = 'I%s.%s.%s.schedulesdirect.org' % (self.atsc_major, self.atsc_minor, self.station_id)
-        elif self.uhf_vhf is not None:
-            id = 'I%s.%s.schedulesdirect.org' % (self.uhf_vhf, self.station_id)
-        elif self.channel is not None:
-            id = 'I%s.%s.schedulesdirect.org' % (self.channel, self.station_id)
-        return id
+        return 'I{0}.{1}.schedulesdirect.org'.format(self.channel, self.station_id)
 
     def __str__(self):
         return self.get_unique_id()
@@ -495,9 +540,15 @@ class Channel(object):
         """
         channel = Channel()
 
+        if 'stationID' in dct:
+            channel.station_id = dct['stationID']
+            del dct['stationID']
+
         if 'channel' in dct:
             channel.channel = dct['channel']
             del dct['channel']
+
+        # Antenna
 
         if 'atscMajor' in dct:
             channel.atsc_major = dct['atscMajor']
@@ -511,9 +562,49 @@ class Channel(object):
             channel.uhf_vhf = dct['uhfVhf']
             del dct['uhfVhf']
 
-        if 'stationID' in dct:
-            channel.station_id = dct['stationID']
-            del dct['stationID']
+        if channel.channel is None and channel.atsc_major is not None and channel.atsc_minor is not None:
+            channel.channel = '{0}.{1}'.format(channel.atsc_major, channel.atsc_minor)
+
+        if channel.channel is None and channel.uhf_vhf is not None:
+            channel.channel = str(channel.uhf_vhf)
+
+        # DVB-T/C/S
+
+        if 'frequencyHz' in dct:
+            channel.frequency_hz = dct['frequencyHz']
+            del dct['frequencyHz']
+
+        if 'deliverySystem' in dct:
+            channel.delivery_system = dct['deliverySystem']
+            del dct['deliverySystem']
+
+        if 'modulationSystem' in dct:
+            channel.modulation_system = dct['modulationSystem']
+            del dct['modulationSystem']
+
+        if 'symbolrate' in dct:
+            channel.symbol_rate = dct['symbolrate']
+            del dct['symbolrate']
+
+        if 'serviceID' in dct:
+            channel.service_id = dct['serviceID']
+            del dct['serviceID']
+
+        if 'networkID' in dct:
+            channel.network_id = dct['networkID']
+            del dct['networkID']
+
+        if 'transportID' in dct:
+            channel.transport_id = dct['transportID']
+            del dct['transportID']
+
+        if 'polarization' in dct:
+            channel.polarization = dct['polarization']
+            del dct['polarization']
+
+        if 'fec' in dct:
+            channel.fec = dct['fec']
+            del dct['fec']
 
         if len(dct) != 0:
             for key in dct.keys():
@@ -521,16 +612,61 @@ class Channel(object):
 
         return channel
 
+class Broadcaster(object):
+    def __init__(self):
+        self.city = None
+        """:type: unicode"""
+
+        self.state = None
+        """:type: unicode"""
+
+        self.postalcode = None
+        """:type: unicode"""
+
+        self.country = None
+        """:type: unicode"""
+
+    @staticmethod
+    def decode(dct):
+        """
+
+        :param dct:
+        :return:
+        """
+        broadcaster = Broadcaster()
+
+        if 'city' in dct:
+            broadcaster.city = dct['city']
+            del dct['city']
+
+        if 'state' in dct:
+            broadcaster.state = dct['state']
+            del dct['state']
+
+        if 'postalcode' in dct:
+            broadcaster.postalcode = dct['postalcode']
+            del dct['postalcode']
+
+        if 'country' in dct:
+            broadcaster.country = dct['country']
+            del dct['country']
+
+        if len(dct) != 0:
+            for key in dct.keys():
+                logging.warn('Key not processed for Broadcaster: ' + key)
+
+        return broadcaster
+
 class StationLogo(object):
     def __init__(self):
         self.url = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.height = None
         """:type: int"""
 
         self.md5 = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.width = None
         """:type: int"""
@@ -571,19 +707,25 @@ class StationLogo(object):
 class Station(object):
     def __init__(self):
         self.station_id = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.callsign = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.name = None
-        """:type: str"""
+        """:type: unicode"""
 
-        self.broadcast_language = None
-        """:type: str"""
+        self.affiliate = None
+        """:type: unicode"""
 
-        self.description_language = None
-        """:type: str"""
+        self.broadcast_language = []
+        """:type: List of unicode"""
+
+        self.description_language = []
+        """:type: List of unicode"""
+
+        self.broadcaster = None
+        """:type: Broadcaster"""
 
         self.logo = None
         """:type: StationLogo"""
@@ -592,10 +734,16 @@ class Station(object):
         """:type: bool"""
 
         self.affiliate = None
-        """:type: str"""
+        """:type: unicode"""
 
-        self.schedule = None
-        """:type: Schedule"""
+        self.schedules = None
+        """:type: List of Schedule"""
+
+    def __str__(self):
+        return self.name
+
+    def __unicode__(self):
+        return self.name
 
     @staticmethod
     def decode(dct):
@@ -620,13 +768,23 @@ class Station(object):
             station.name = dct['name']
             del dct['name']
 
+        if 'affiliate' in dct:
+            station.affiliate = dct['affiliate']
+            del dct['affiliate']
+
         if 'broadcastLanguage' in dct:
-            station.broadcast_language = dct['broadcastLanguage']
+            for broadcast_language in dct['broadcastLanguage']:
+                station.broadcast_language.append(broadcast_language)
             del dct['broadcastLanguage']
 
         if 'descriptionLanguage' in dct:
-            station.description_language = dct['descriptionLanguage']
+            for description_language in dct['descriptionLanguage']:
+                station.description_language.append(description_language)
             del dct['descriptionLanguage']
+
+        if 'broadcaster' in dct:
+            station.broadcaster = Broadcaster.decode(dct['broadcaster'])
+            del dct['broadcaster']
 
         if 'logo' in dct:
             station.logo = StationLogo.decode(dct['logo'])
@@ -649,7 +807,7 @@ class Station(object):
 class ProgramTitles(object):
     def __init__(self):
         self.title120 = None
-        """:type: str"""
+        """:type: unicode"""
 
     @staticmethod
     def decode(arr):
@@ -669,7 +827,7 @@ class ProgramTitles(object):
 
         return program_titles
 
-class TribuneMetadata(object):
+class SeasonEpisode(object):
     def __init__(self):
         self.season = None
         """:type : int"""
@@ -684,28 +842,28 @@ class TribuneMetadata(object):
         :param dct:
         :type dct: dict
         :return:
-        :rtype: TribuneMetadata
+        :rtype: SeasonEpisode
         """
-        tribune_metadata = TribuneMetadata()
+        season_episode = SeasonEpisode()
 
         if 'season' in dct:
-            tribune_metadata.season = dct['season']
+            season_episode.season = dct['season']
             del dct['season']
 
         if 'episode' in dct:
-            tribune_metadata.episode = dct['episode']
+            season_episode.episode = dct['episode']
             del dct['episode']
 
         if len(dct) != 0:
             for key in dct.keys():
-                logging.warn('Key not processed for TribuneMetadata: ' + key)
+                logging.warn('Key not processed for SeasonEpisode: ' + key)
 
-        return tribune_metadata
+        return season_episode
 
 class ProgramMetadata(object):
     def __init__(self):
-        self.tribune = None
-        """:type : TribuneMetadata"""
+        self.season_episode = None
+        """:type : SeasonEpisode"""
 
     @staticmethod
     def decode(arr):
@@ -716,8 +874,9 @@ class ProgramMetadata(object):
         """
         program_metadata = ProgramMetadata()
         for item in arr:
-            if 'Tribune' in item:
-                program_metadata.tribune = TribuneMetadata.decode(item['Tribune'])
+            if 'Gracenote' in item:
+                program_metadata.season_episode = SeasonEpisode.decode(item['Gracenote'])
+                del item['Gracenote']
             else:
                 logging.warn('Program metadata not processed: ' + str(item))
 
@@ -808,6 +967,14 @@ class QualityRating(object):
         self.ratings_body = None
         """:type: unicode"""
 
+    def get_stars(self):
+        rating_float = float(self.rating)
+        rating_int = int(rating_float)
+        stars_str = unichr(0x2606) * rating_int
+        if rating_float - rating_int > 0:
+            stars_str += unichr(0x00BD)
+        return stars_str
+
     @staticmethod
     def decode(dct):
         """
@@ -851,10 +1018,10 @@ class ProgramMovie(object):
         """:type: int"""
 
         self.quality_ratings = []
-        """:type: list of [QualityRating]"""
+        """:type: List of [QualityRating]"""
 
         self.year = None
-        """:type: str"""
+        """:type: unicode"""
 
     @staticmethod
     def decode(dct):
@@ -882,17 +1049,17 @@ class ProgramMovie(object):
 
         if len(dct) != 0:
             for key in dct.keys():
-                logging.warn('Key not processed for ProgramDescriptions: ' + key)
+                logging.warn('Key not processed for ProgramMovie: ' + key)
 
         return program_movie
 
 class ProgramContentRating(object):
     def __init__(self):
         self.body = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.code = None
-        """:type: str"""
+        """:type: unicode"""
 
     def __str__(self):
         return u'{0}: {1}'.format(self.body, self.code)
@@ -1071,7 +1238,7 @@ class ProgramCrew(object):
 class Program(object):
     def __init__(self):
         self.program_id = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.titles = ProgramTitles()
         """:type: ProgramTitles"""
@@ -1085,10 +1252,10 @@ class Program(object):
         """:type: datetime"""
 
         self.genres = []
-        """:type: list of [str]"""
+        """:type: list of [unicode]"""
 
         self.episode_title = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.metadata = ProgramMetadata()
         """:type: ProgramMetadata"""
@@ -1100,13 +1267,13 @@ class Program(object):
         """:type: list of [ProgramCrew]"""
 
         self.show_type = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.has_image_artwork = None
         """:type: bool"""
 
         self.md5 = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.content_ratings = []
         """:type: list of [ProgramContentRatings]"""
@@ -1122,6 +1289,15 @@ class Program(object):
 
         self.episode_num = None
         """:type: int"""
+
+        self.animation = None
+        """:type: unicode"""
+
+        self.audience = None
+        """:type: unicode"""
+
+        self.holiday = None
+        """:type: unicode"""
 
     def __str__(self):
         return u'{0} "{1}"'.format(self.program_id, self.titles.title120)
@@ -1227,6 +1403,18 @@ class Program(object):
             program.movie = ProgramMovie.decode(dct['movie'])
             del dct['movie']
 
+        if 'animation' in dct:
+            program.animation = dct['animation']
+            del dct['animation']
+
+        if 'audience' in dct:
+            program.audience = dct['audience']
+            del dct['audience']
+
+        if 'holiday' in dct:
+            program.holiday = dct['holiday']
+            del dct['holiday']
+
         if len(dct) != 0:
             for key in dct.keys():
                 logging.warn('Key not processed for Program: ' + key)
@@ -1239,16 +1427,10 @@ class ScheduleMetadata(object):
         """:type: datetime"""
 
         self.md5 = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.start_date = None
         """:type: datetime"""
-
-        self.end_date = None
-        """:type: datetime"""
-
-        self.days = None
-        """:type: int"""
 
     @staticmethod
     def decode(dct):
@@ -1273,14 +1455,6 @@ class ScheduleMetadata(object):
             schedule_metadata.start_date = parse_date(dct['startDate'])
             del dct['startDate']
 
-        if 'endDate' in dct:
-            schedule_metadata.end_date = parse_date(dct['endDate'])
-            del dct['endDate']
-
-        if 'days' in dct:
-            schedule_metadata.days = dct['days']
-            del dct['days']
-
         if len(dct) != 0:
             for key in dct.keys():
                 logging.warn('Key not processed for ScheduleMetadata: ' + key)
@@ -1290,7 +1464,7 @@ class ScheduleMetadata(object):
 class Schedule(object):
     def __init__(self):
         self.station_id = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.station = None
         """:type: Station"""
@@ -1300,6 +1474,12 @@ class Schedule(object):
 
         self.metadata = None
         """:type: ScheduleMetadata"""
+
+    def __str__(self):
+        return 'Schedule for {0}'.format(self.metadata.start_date)
+
+    def __unicode__(self):
+        return 'Schedule for {0}'.format(self.metadata.start_date)
 
     @staticmethod
     def decode(dct):
@@ -1372,10 +1552,10 @@ class Airing(object):
         """:type: Schedule"""
 
         self.program_id = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.md5 = None
-        """:type: str"""
+        """:type: unicode"""
 
         self.air_date_time = None
         """:type: datetime"""
@@ -1399,7 +1579,7 @@ class Airing(object):
 
         # Values are: "Season Premiere", "Season Finale", "Series Premiere", "Series Finale"
         self.is_premiere_or_finale = None
-        """:type: str"""
+        """:type: unicode"""
 
         # is this showing new?
         self.is_new = False
@@ -1449,6 +1629,8 @@ class Airing(object):
         """:type: MultipartAiring"""
 
         self.ratings = []
+
+        self.parental_advisory = False
 
     @staticmethod
     def decode(dct):
@@ -1562,6 +1744,10 @@ class Airing(object):
         if 'ratings' in dct:
             airing.ratings = dct['ratings']
             del dct['ratings']
+
+        if 'parentalAdvisory' in dct:
+            airing.parental_advisory = dct['parentalAdvisory']
+            del dct['parentalAdvisory']
 
         if len(dct) != 0:
             for key in dct.keys():

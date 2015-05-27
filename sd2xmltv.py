@@ -6,18 +6,20 @@ from xmltv.common import XmltvDocument, XmltvChannel, XmltvProgramme
 from libschedulesdirect.common import Status, Program, Airing, Channel
 from libschedulesdirect.schedulesdirect import SchedulesDirect
 from optparse import OptionParser
-import ConfigParser
 import datetime
+from datetime import timedelta
 import gzip
 
 class Sd2Xmltv:
 
-    def __init__(self, username, password, output_path):
-        self._sd = SchedulesDirect(username, password)
+    def __init__(self, options):
+        self._sd = SchedulesDirect(options.username, options.password)
+        self._status = None
 
         self._logger = logging.getLogger(__name__)
         self._xmltv_document = XmltvDocument()
-        self._output_path = output_path
+        self._output_path = options.output_path
+        self._days = options.days
 
         self._callsign_whitelist = None
         self._callsign_blacklist = None
@@ -29,71 +31,68 @@ class Sd2Xmltv:
 
         self._genres = set()
 
-        #self._genre_config = ConfigParser.ConfigParser()
-        #self._genre_config.read('./config/tvheadend.ini')
-
-    def process(self):
-        # TODO: Add timezone to parsed datetime strings (maybe?)
-        # TODO: Add xmltv tv element attributes
-        # TODO: Convert type definitions from str to unicode
-        # TODO: Respect next connection datetime
-        # TODO: Respect offline status
-        # TODO: implement __unicode__ in addition to __str__ for all objects
-        # TODO: move schedulesdirect implementation to subdirectory api20140530
-        # TODO: rename schedulesdirect.py to client.py (maybe?)
-        # TODO: abstract cache to an interface
-        # TODO: allow offline access with cached data
+    def login(self):
         self._logger.info('Getting SchedulesDirect token.')
         self._sd.get_token()
 
         self._logger.info('Getting SchedulesDirect status.')
-        status = Status.decode(self._sd.get_status())
+        self._status = Status.decode(self._sd.get_status())
 
         if not self._sd.is_online():
             raise Exception('System is not online.')
 
-        expiry_delta = status.account.expires - datetime.datetime.utcnow()
-        self._logger.info('Account will expire on {0} ({1} days).'.format(status.account.expires, int(expiry_delta.total_seconds() // 86400)))
+        expiry_delta = self._status.account.expires - datetime.datetime.utcnow()
+        self._logger.info('Account will expire on {0} ({1} days).'.format(self._status.account.expires, int(expiry_delta.total_seconds() // 86400)))
 
-        time_delta = datetime.datetime.utcnow() - status.last_data_update
+        time_delta = datetime.datetime.utcnow() - self._status.last_data_update
         hours, minutes = int(time_delta.total_seconds() // 3600), int((time_delta.total_seconds() % 3600) // 60)
-        self._logger.info('SchedulesDirect last update at {0} ({1} hours {2} minutes ago).'.format(status.last_data_update, hours, minutes))
+        self._logger.info('SchedulesDirect last update at {0} ({1} hours {2} minutes ago).'.format(self._status.last_data_update, hours, minutes))
 
-        connect_delta = status.account.next_suggested_connect_time - datetime.datetime.utcnow()
-        hours, minutes = int(connect_delta.total_seconds() // 3600), int((connect_delta.total_seconds() % 3600) // 60)
-        self._logger.info('Next suggested connect time is {0} ({1} hours {2} minutes).'.format(status.account.next_suggested_connect_time, hours, minutes))
+        if self._status.system_status.message is not None:
+            self._logger.info('Message: {0}'.format(self._status.system_status.message))
 
-        lineups = self._sd.get_lineups([(status_lineup.id, status_lineup.modified) for status_lineup in status.lineups])
+    def process(self):
+
+        if len(self._status.lineups) == 0:
+            self._logger.info('Not subscribed to any lineups, exiting.')
+            return
+
+        self._logger.info('Getting station/channel mappings for {0} lineups.'.format(len(self._status.lineups)))
+        lineup_mappings = self._sd.get_lineup_mappings([(lineup.lineup_id, lineup.modified) for lineup in self._status.lineups])
 
         #self._callsign_whitelist = ['CBLTDT', 'CHCHDT', 'CKCODT', 'CICADT', 'CHCJDT', 'CJMTDT', 'CIIID41', 'CFMTDT', 'CITYDT']
 
-        station_ids = {channel.station.station_id for channel in self._enumerate_channels(lineups)}
+        station_ids = {channel.station.station_id for channel in self._enumerate_channels(lineup_mappings)}
 
-        schedules = self._sd.get_schedules(station_ids, days = 13)
+        current_date = datetime.datetime.utcnow().date()
 
-        result = [(channel, schedule) for channel in self._enumerate_channels(lineups) for schedule in schedules if channel.station.station_id == schedule.station_id]
-        for (channel, schedule) in result:
-            channel.station.schedule = schedule
+        schedule_dates = [(current_date + timedelta(days = x)).strftime('%Y-%m-%d') for x in range(0, self._days)]
+
+        self._logger.info('Getting schedules for {0} stations.'.format(len(station_ids)))
+        schedules = self._sd.get_schedules(station_ids, schedule_dates)
+
+        for channel in self._enumerate_channels(lineup_mappings):
+            channel.station.schedules = [schedule for schedule in schedules if channel.station.station_id == schedule.station_id]
 
         self._logger.info('Caching new or changed programs...')
-        programs = [(airing.program_id, airing.md5) for airing in self._enumerate_airings(lineups)]
+        programs = [(airing.program_id, airing.md5) for airing in self._enumerate_airings(lineup_mappings)]
         self._sd.cache_programs(programs)
 
         self._logger.info('Adding channels to xmltv document...')
-        for channel in self._enumerate_channels(lineups):
+        for channel in self._enumerate_channels(lineup_mappings):
             self._add_channel(channel)
 
         self._logger.info('Adding programs to xmltv document...')
         total_programs_added = 0
-        for channel in self._enumerate_channels(lineups):
-            self._logger.info('Adding programs between %s and %s for channel %s.' %
-                              (channel.station.schedule.metadata.start_date,
-                               channel.station.schedule.metadata.end_date,
-                              channel.get_display_names().next()))
+        for channel in self._enumerate_channels(lineup_mappings):
             programs_added = 0
-            for airing in channel.station.schedule.airings:
-                programs_added += 1
-                self._add_programme(channel, airing)
+            for schedule in channel.station.schedules:
+                self._logger.info('Adding programs on %s for channel %s.' %
+                                  (schedule.metadata.start_date.strftime("%Y-%m-%d"),
+                                  channel.get_display_names().next()))
+                for airing in schedule.airings:
+                    programs_added += 1
+                    self._add_programme(channel, airing)
             self._logger.info('Added %s programs for channel %s.' %
                               (programs_added, channel.get_display_names().next()))
             total_programs_added += programs_added
@@ -110,6 +109,146 @@ class Sd2Xmltv:
             self._xmltv_document.save(self._output_path)
 
         return
+
+    def manage(self):
+        while True:
+            print('\nManage Account Options:\n')
+            print('1. List subscribed lineups')
+            print('2. Add lineup')
+            print('3. Remove lineup')
+            print('4. List lineup channels.')
+            print('\nChoose an option or \'x\' to exit.')
+            choice = raw_input('> ')
+            if choice == 'x':
+                break
+            if choice == '1':
+                self._list_subscribed_lineups()
+            elif choice == '2':
+                self._add_lineup()
+            elif choice == '3':
+                self._remove_lineup()
+            elif choice == '4':
+                self._list_lineup_channels()
+
+    def _list_subscribed_lineups(self):
+        lineups = self._sd.get_subscribed_lineups()
+        print '\nSubscribed Lineups:\n'
+        for lineup in lineups:
+            print 'Lineup:\t%s' % lineup.lineup_id
+            print 'Name:\t%s' % lineup.name
+            print 'Transport:\t%s' % lineup.transport
+            print 'Location:\t%s' % lineup.location
+            print ''
+
+    def _add_lineup(self):
+        while True:
+            print '\nAdd Lineup\n'
+            print 'Enter zip or postal code or \'x\' to cancel:'
+            postal_code = raw_input('> ')
+            if postal_code == 'x':
+                break
+
+            headends = self._sd.get_headends_by_postal_code('CAN', postal_code)
+
+            while True:
+                subscribed_lineups = self._sd.get_subscribed_lineups()
+                subscribed_lineup_ids = [lineup.lineup_id for lineup in subscribed_lineups]
+
+                headend_lineups = [(headend, lineup) for headend in headends for lineup in headend.lineups if lineup.lineup_id not in subscribed_lineup_ids]
+
+                transport_set = set()
+
+                for (headend, lineup) in headend_lineups:
+                    transport_set.add(headend.type)
+
+                options = []
+                count = 0
+                for transport in transport_set:
+                    print '\nTransport: %s\n' % transport
+                    for (headend, lineup) in [(headend, lineup) for (headend, lineup) in headend_lineups if headend.type == transport]:
+                        options.append((headend, lineup))
+                        count += 1
+                        print '\t%s. %s (%s)' % (count, lineup.name, headend.location)
+
+                print '\nChoose a lineup to add or \'x\' to cancel.'
+                choice = raw_input('> ')
+
+                if choice == 'x':
+                    break
+
+                choice = int(choice) - 1
+                (headend, lineup) = options[choice]
+
+                print 'Are you sure you want to add \'%s (%s)\'? (y/n)' % (lineup.name, headend.location)
+                if raw_input('> ') != 'y':
+                    continue
+
+                response = self._sd.add_lineup(lineup.lineup_id)
+
+                print 'Schedules Direct returned \'%s\'.' % response.message
+                print '%s lineup changes remaining.\n' % response.changes_remaining
+
+    def _list_lineup_channels(self):
+
+        while True:
+            print '\nList Lineup Channels\n'
+
+            subscribed_lineups = self._sd.get_subscribed_lineups()
+
+            options = []
+            count = 0
+            for lineup in subscribed_lineups:
+                count += 1
+                options.append(lineup)
+                print '%s. %s (%s)' % (count, lineup.name, lineup.location)
+
+            print '\nChoose a lineup to list channels or \'x\' to cancel.'
+            choice = raw_input('> ')
+            if choice == 'x':
+                break
+
+            choice = int(choice) - 1
+            lineup = options[choice]
+
+            lineup_mapping = self._sd.get_lineup_mapping(lineup.lineup_id)
+
+            for channel in lineup_mapping.channels:
+                print '%s\t%s.%s\t%s\t%s "%s"' % (channel.uhf_vhf, channel.atsc_major, channel.atsc_minor, channel.channel, channel.station.callsign, channel.station.name)
+
+            #print 'Are you sure you want to remove \'%s (%s)\'? (y/n)' % (lineup.name, lineup.location)
+            #if raw_input('> ') != 'y':
+            #    continue
+
+    def _remove_lineup(self):
+
+        while True:
+            print '\nRemove Lineup\n'
+
+            subscribed_lineups = self._sd.get_subscribed_lineups()
+
+            options = []
+            count = 0
+            for lineup in subscribed_lineups:
+                count += 1
+                options.append(lineup)
+                print '%s. %s (%s)' % (count, lineup.name, lineup.location)
+
+            print '\nChoose a lineup to remove or \'x\' to cancel.'
+            choice = raw_input('> ')
+            if choice == 'x':
+                break
+
+            choice = int(choice) - 1
+            lineup = options[choice]
+
+            print 'Are you sure you want to remove \'%s (%s)\'? (y/n)' % (lineup.name, lineup.location)
+            if raw_input('> ') != 'y':
+                continue
+
+            response = self._sd.remove_lineup(lineup.lineup_id)
+
+            print '\nSchedules Direct returned \'%s\'.' % response.message
+            print '%s lineup changes remaining.\n' % response.changes_remaining
 
     def _enumerate_channels(self, lineups):
         result = [channel for lineup in lineups for channel in lineup.channels]
@@ -131,8 +270,9 @@ class Sd2Xmltv:
 
     def _enumerate_airings(self, lineups):
         for channel in self._enumerate_channels(lineups):
-            for airing in channel.station.schedule.airings:
-                yield airing
+            for schedule in channel.station.schedules:
+                for airing in schedule.airings:
+                    yield airing
 
     def _add_program_categories(self, programme, channel, airing, program):
         """
@@ -226,15 +366,15 @@ class Sd2Xmltv:
         # tvheadend now supports series subscription filtering so add to all shows
         p.add_episode_num_dd_progid(program.program_id)
 
-        if program.metadata.tribune is not None:
+        if program.metadata.season_episode is not None:
             if airing.multipart is None:
                 p.add_episode_num_xmltv_ns(
-                    season_num = program.metadata.tribune.season,
-                    episode_num = program.metadata.tribune.episode)
+                    season_num = program.metadata.season_episode.season,
+                    episode_num = program.metadata.season_episode.episode)
             else:
                 p.add_episode_num_xmltv_ns(
-                    season_num = program.metadata.tribune.season,
-                    episode_num = program.metadata.tribune.episode,
+                    season_num = program.metadata.season_episode.season,
+                    episode_num = program.metadata.season_episode.episode,
                     part_num = airing.multipart.part_number,
                     total_parts = airing.multipart.total_parts)
         elif program.episode_num is not None:
@@ -258,8 +398,8 @@ class Sd2Xmltv:
         elif program.original_air_date is not None:
             program_attributes.append(program.original_air_date.strftime('%Y-%m-%d'))
 
-        if program.metadata.tribune is not None:
-            program_attributes.append('S%sE%s' % (program.metadata.tribune.season, program.metadata.tribune.episode))
+        if program.metadata.season_episode is not None:
+            program_attributes.append('S%sE%s' % (program.metadata.season_episode.season, program.metadata.season_episode.episode))
         elif program.episode_num is not None:
             program_attributes.append('E' + str(program.episode_num))
 
@@ -349,11 +489,19 @@ def main():
     parser = OptionParser()
     parser.add_option('-u', '--username', dest='username', help='SchedulesDirect.org username.')
     parser.add_option('-p', '--password', dest='password', help='SchedulesDirect.org password.')
-    parser.add_option('-o', '--output', dest='output', default='./xmltv.xml', help='Output path and filename.')
-    parser.add_option('-d', '--days', dest='days', default='99', help='Number of days to import')
+    parser.add_option('-o', '--output', dest='output_path', default='./xmltv.xml', help='Output path and filename.')
+    parser.add_option('-d', '--days', dest='days', type='int', default=14, help='Number of days to import')
+    parser.add_option('-m', '--manage', dest='manage', action='store_true', default=False, help='Manage lineups')
+
     (options, args) = parser.parse_args()
-    app = Sd2Xmltv(options.username, options.password, options.output)
-    app.process()
+
+    app = Sd2Xmltv(options)
+    app.login()
+
+    if (options.manage == True):
+        app.manage()
+    else:
+        app.process()
 
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s', level=logging.INFO)
