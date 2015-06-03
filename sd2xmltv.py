@@ -97,7 +97,6 @@ class Sd2Xmltv:
             total_programs_added += programs_added
         self._logger.info('Added %s total programs.' % total_programs_added)
 
-
         self._logger.info('Saving ' + self._output_path)
 
         if self._output_path[-2:] == 'gz':
@@ -355,11 +354,6 @@ class Sd2Xmltv:
         #for genre in program.genres:
         #    p.add_category('sd: ' + genre)
 
-        sub_type = None
-        if program.event_details is not None:
-            if 'subType' in program.event_details:
-                sub_type = program.event_details['subType']
-
         # was airing.is_new
         #if program.program_id[:2] == 'EP' or program.program_id[:2] == 'MV' or program.program_id[:2] == 'SP':
         # tvheadend now supports series subscription filtering so add to all shows
@@ -385,8 +379,8 @@ class Sd2Xmltv:
 
         program_attributes = []
 
-        if sub_type is not None:
-            program_attributes.append(sub_type)
+        if program.show_type is not None:
+            program_attributes.append(program.show_type)
 
         if program.movie is not None and program.movie.year is not None:
             program_attributes.append(program.movie.year)
