@@ -57,7 +57,7 @@ class StatusAccount(object):
         """:type: datetime"""
 
         self.messages = None
-        """:type: list of [unicode]"""
+        """:type: list[unicode]"""
 
         self.max_lineups = None
         """:type: int"""
@@ -137,13 +137,13 @@ class Status(object):
         """:type: StatusAccount"""
 
         self.lineups = []
-        """:type: list of [Lineup]"""
+        """:type: list[Lineup]"""
 
         self.last_data_update = None
         """:type: datetime"""
 
         self.notifications = []
-        """:type: list of [unicode]"""
+        """:type: list[unicode]"""
 
         self.system_status = None
         """:type: StatusSystem"""
@@ -345,7 +345,7 @@ class Headend(object):
         """:type: unicode"""
 
         self.lineups = []
-        """:type: list of [Lineup]"""
+        """:type: list[Lineup]"""
 
     def __str__(self):
         return '{0} / {1} / {2}'.format(self.headend_id, self.transport, self.location)
@@ -389,10 +389,10 @@ class Headend(object):
 class LineupMapping(object):
     def __init__(self):
         self.channels = []
-        """:type: list of [Channel]"""
+        """:type: list[Channel]"""
 
         self.stations = []
-        """:type: list of [Station]"""
+        """:type: list[Station]"""
 
         self.metadata = None
         """:type: Lineup"""
@@ -719,10 +719,10 @@ class Station(object):
         """:type: unicode"""
 
         self.broadcast_language = []
-        """:type: List of unicode"""
+        """:type: list[unicode]"""
 
         self.description_language = []
-        """:type: List of unicode"""
+        """:type: list[unicode]"""
 
         self.broadcaster = None
         """:type: Broadcaster"""
@@ -737,7 +737,7 @@ class Station(object):
         """:type: unicode"""
 
         self.schedules = None
-        """:type: List of Schedule"""
+        """:type: list[Schedule]"""
 
     def __str__(self):
         return self.name
@@ -918,10 +918,10 @@ class ProgramDescription(object):
 class ProgramDescriptions(object):
     def __init__(self):
         self.description100 = []
-        """:type: list of [ProgramDescription]"""
+        """:type: list[ProgramDescription]"""
 
         self.description1000 = []
-        """:type: list of [ProgramDescription]"""
+        """:type: list[ProgramDescription]"""
 
     @staticmethod
     def decode(dct):
@@ -1018,7 +1018,7 @@ class ProgramMovie(object):
         """:type: int"""
 
         self.quality_ratings = []
-        """:type: List of [QualityRating]"""
+        """:type: list[QualityRating]"""
 
         self.year = None
         """:type: unicode"""
@@ -1252,7 +1252,7 @@ class Program(object):
         """:type: date"""
 
         self.genres = []
-        """:type: list of [unicode]"""
+        """:type: list[unicode]"""
 
         self.episode_title = None
         """:type: unicode"""
@@ -1261,10 +1261,10 @@ class Program(object):
         """:type: ProgramMetadata"""
 
         self.cast = []
-        """:type: list of [ProgramCast]"""
+        """:type: list[ProgramCast]"""
 
         self.crew = []
-        """:type: list of [ProgramCrew]"""
+        """:type: list[ProgramCrew]"""
 
         self.show_type = None
         """:type: unicode"""
@@ -1276,13 +1276,13 @@ class Program(object):
         """:type: unicode"""
 
         self.content_ratings = []
-        """:type: list of [ProgramContentRatings]"""
+        """:type: list[ProgramContentRatings]"""
 
         self.content_advisories = []
-        """:type: list of [unicode]"""
+        """:type: list[unicode]"""
 
         self.recommendations = []
-        """:type: list of [ProgramRecommendation]"""
+        """:type: list[ProgramRecommendation]"""
 
         self.movie = None
         """:type: ProgramMovie"""
@@ -1470,7 +1470,7 @@ class Schedule(object):
         """:type: Station"""
 
         self.airings = []
-        """:type: list of [Airing]"""
+        """:type: list[Airing]"""
 
         self.metadata = None
         """:type: ScheduleMetadata"""

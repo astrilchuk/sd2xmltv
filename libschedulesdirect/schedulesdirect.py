@@ -34,7 +34,7 @@ class SchedulesDirect(object):
         :param country:
         :param postal_code:
         :return:
-        :rtype: list of [Headend]
+        :rtype: list[Headend]
         """
         headends = []
         headends_dict = self._api.get_headends_by_postal_code(country, postal_code)
@@ -47,7 +47,7 @@ class SchedulesDirect(object):
         """
 
         :return:
-        :rtype: list of [Lineup]
+        :rtype: list[Lineup]
         """
         if self._subscribed_lineups is not None:
             return self._subscribed_lineups
@@ -85,7 +85,7 @@ class SchedulesDirect(object):
 
         :param status_lineups:
         :return:
-        :rtype: list of [LineupMapping]
+        :rtype: list[LineupMapping]
         """
         lineup_mappings = []
 
@@ -102,7 +102,7 @@ class SchedulesDirect(object):
         """
 
         :param programs:
-        :type programs: list of [(str, str)]
+        :type programs: list[(str, str)]
         :return:
         """
         self._logger.debug('Searching for uncached programs...')
@@ -140,9 +140,9 @@ class SchedulesDirect(object):
         """
 
         :param station_ids:
-        :type station_ids: list of [str]
+        :type station_ids: list[str]
         :return:
-        :rtype: list of [Schedule]
+        :rtype: list[Schedule]
         """
         self._logger.debug('_get_schedules("%s","%s")' % (station_ids, dates))
         schedules = []
