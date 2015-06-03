@@ -2,6 +2,7 @@
 # coding=utf-8
 
 from datetime import datetime, timedelta
+from dateutil import parser
 import logging
 
 class Token(object):
@@ -1235,6 +1236,76 @@ class ProgramCrew(object):
 
         return program_crew
 
+class EventTeam(object):
+    def __init__(self):
+        self.name = None
+        """:type: unicode"""
+
+        self.is_home = False
+        """:type: bool"""
+
+    @staticmethod
+    def decode(dct):
+        """
+
+        :param dct:
+        :return:
+        """
+        event_team = EventTeam()
+
+        if 'name' in dct:
+            event_team.name = dct['name']
+            del dct['name']
+
+        if 'isHome' in dct:
+            event_team.is_home = dct['isHome']
+            del dct['isHome']
+
+        if len(dct) != 0:
+            for key in dct.keys():
+                logging.warn('Key not processed for ProgramEventDetails: ' + key)
+
+        return event_team
+
+class ProgramEventDetails(object):
+    def __init__(self):
+        self.venue = None
+        """:type: unicode"""
+
+        self.game_date = None
+        """:type: datetime"""
+
+        self.teams = []
+        """:type: list[EventTeam]"""
+
+    @staticmethod
+    def decode(dct):
+        """
+
+        :param dct:
+        :return:
+        """
+        ped = ProgramEventDetails()
+
+        if 'venue100' in dct:
+            ped.venue = dct['venue100']
+            del dct['venue100']
+
+        if 'gameDate' in dct:
+            ped.game_date = parser.parse(dct['gameDate'])
+            del dct['gameDate']
+
+        if 'teams' in dct:
+            for team in dct['teams']:
+                ped.teams.append(EventTeam.decode(team))
+            del dct['teams']
+
+        if len(dct) != 0:
+            for key in dct.keys():
+                logging.warn('Key not processed for ProgramEventDetails: ' + key)
+
+        return ped
+
 class Program(object):
     def __init__(self):
         self.program_id = None
@@ -1244,6 +1315,7 @@ class Program(object):
         """:type: ProgramTitles"""
 
         self.event_details = None
+        """:type: ProgramEventDetails"""
 
         self.descriptions = ProgramDescriptions()
         """:type: ProgramDescriptions"""
@@ -1342,9 +1414,8 @@ class Program(object):
             program.md5 = dct['md5']
             del dct['md5']
 
-        # TODO: Parse eventDetails
         if 'eventDetails' in dct:
-            program.event_details = dct['eventDetails']
+            program.event_details = ProgramEventDetails.decode(dct['eventDetails'])
             del dct['eventDetails']
 
         if 'descriptions' in dct:
