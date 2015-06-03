@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding=utf-8
 
-import datetime
+from datetime import datetime, timedelta
 import logging
 
 class Token(object):
@@ -1249,7 +1249,7 @@ class Program(object):
         """:type: ProgramDescriptions"""
 
         self.original_air_date = None
-        """:type: datetime"""
+        """:type: date"""
 
         self.genres = []
         """:type: list of [unicode]"""
@@ -1660,7 +1660,7 @@ class Airing(object):
             del dct['duration']
 
         if airing.air_date_time is not None and airing.duration is not None:
-            airing.end_date_time = airing.air_date_time + datetime.timedelta(seconds=airing.duration)
+            airing.end_date_time = airing.air_date_time + timedelta(seconds=airing.duration)
 
         if 'liveTapeDelay' in dct:
             airing.live_tape_delay = dct['liveTapeDelay']
@@ -1756,7 +1756,7 @@ class Airing(object):
         return airing
 
 def parse_datetime(datetime_str):
-    return datetime.datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%SZ")
+    return datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%SZ")
 
 def parse_date(date_str):
-    return datetime.datetime.strptime(date_str, "%Y-%m-%d")
+    return datetime.strptime(date_str, "%Y-%m-%d").date()

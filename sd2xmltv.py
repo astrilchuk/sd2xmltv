@@ -6,8 +6,7 @@ from xmltv.common import XmltvDocument, XmltvChannel, XmltvProgramme
 from libschedulesdirect.common import Status, Program, Airing, Channel
 from libschedulesdirect.schedulesdirect import SchedulesDirect
 from optparse import OptionParser
-import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 import gzip
 
 class Sd2Xmltv:
@@ -41,10 +40,10 @@ class Sd2Xmltv:
         if not self._sd.is_online():
             raise Exception('System is not online.')
 
-        expiry_delta = self._status.account.expires - datetime.datetime.utcnow()
+        expiry_delta = self._status.account.expires - datetime.utcnow()
         self._logger.info('Account will expire on {0} ({1} days).'.format(self._status.account.expires, int(expiry_delta.total_seconds() // 86400)))
 
-        time_delta = datetime.datetime.utcnow() - self._status.last_data_update
+        time_delta = datetime.utcnow() - self._status.last_data_update
         hours, minutes = int(time_delta.total_seconds() // 3600), int((time_delta.total_seconds() % 3600) // 60)
         self._logger.info('SchedulesDirect last update at {0} ({1} hours {2} minutes ago).'.format(self._status.last_data_update, hours, minutes))
 
@@ -64,7 +63,7 @@ class Sd2Xmltv:
 
         station_ids = {channel.station.station_id for channel in self._enumerate_channels(lineup_mappings)}
 
-        current_date = datetime.datetime.utcnow().date()
+        current_date = datetime.utcnow().date()
 
         schedule_dates = [(current_date + timedelta(days = x)).strftime('%Y-%m-%d') for x in range(0, self._days)]
 
@@ -489,7 +488,7 @@ def main():
     parser = OptionParser()
     parser.add_option('-u', '--username', dest='username', help='SchedulesDirect.org username.')
     parser.add_option('-p', '--password', dest='password', help='SchedulesDirect.org password.')
-    parser.add_option('-o', '--output', dest='output_path', default='./xmltv.xml', help='Output path and filename.')
+    parser.add_option('-o', '--output', dest='output_path', default='./xmltv.xml', help='Output path and filename (use .gz to compress).')
     parser.add_option('-d', '--days', dest='days', type='int', default=14, help='Number of days to import')
     parser.add_option('-m', '--manage', dest='manage', action='store_true', default=False, help='Manage lineups')
 
