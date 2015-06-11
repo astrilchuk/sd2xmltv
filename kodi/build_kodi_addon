@@ -1,0 +1,66 @@
+#!/bin/bash
+set -x
+. config
+#  Package sd2xmltv as a kodi addon that can be installed from a zip file
+#
+rm -rf tools.module.sd2xmltv
+rm -rf unpack
+rm tools.module.sd2xmltv-*.zip
+mkdir tools.module.sd2xmltv
+cp -r base_addon/* tools.module.sd2xmltv
+mkdir unpack
+mkdir prereqs
+
+# dateutil is not in the base OE install so we need to add it
+# dateutil requites six
+
+cd prereqs
+if [ -f python-dateutil-${DATEUTIL_VERSION}.tar.gz ]
+  then :
+  else
+    rm python-dateutil-*
+    wget ${DATEUTIL_URI}
+fi
+if [ -f six-${SIX_VERSION}.tar.gz ]
+  then :
+  else
+    rm six-*
+    wget ${SIX_URI}
+fi
+# 
+# unpack the preqs
+#
+[ -f six-${SIX_VERSION}.tar.gz -a \
+     -f python-dateutil-${DATEUTIL_VERSION}.tar.gz \
+  ] || { echo " prereqs are not available "; exit 1; }
+cd ../
+tar xf prereqs/python-dateutil-${DATEUTIL_VERSION}.tar.gz -C unpack/
+tar xf prereqs/six-${SIX_VERSION}.tar.gz -C unpack/
+#
+#  Build the tzinfo for dateutil
+#
+cd unpack/python-dateutil-${DATEUTIL_VERSION}
+cp ../six-${SIX_VERSION}/six.py .
+python updatezinfo.py
+cd ../..
+find unpack/python-dateutil-${DATEUTIL_VERSION}/ -name *.pyc -delete
+#
+#  Populate the addon
+#
+mv unpack/python-dateutil-${DATEUTIL_VERSION}/dateutil tools.module.sd2xmltv/
+cp unpack/six-${SIX_VERSION}/six.py tools.module.sd2xmltv/dateutil
+mkdir tools.module.sd2xmltv/libschedulesdirect/
+cp -r ../libschedulesdirect/* tools.module.sd2xmltv/libschedulesdirect/
+mkdir tools.module.sd2xmltv/xmltv/
+cp -r ../xmltv/* tools.module.sd2xmltv/xmltv/
+cp ../*.py tools.module.sd2xmltv/
+#  add the license files to keep everything on the up-n-up
+cp ../LICENSE  tools.module.sd2xmltv/LICENSE-sd2xmltv
+cp unpack/six-${SIX_VERSION}/LICENSE tools.module.sd2xmltv/LICENSE-six
+cp unpack/python-dateutil-${DATEUTIL_VERSION}/LICENSE  tools.module.sd2xmltv/LICENSE-python-dateutil
+#
+# update the addon version number
+sed -i tools.module.sd2xmltv/addon.xml -e 's/__VER__/'${ADDON_VERSION}'/g'
+zip -r tools.module.sd2xmltv-${ADDON_VERSION}.zip tools.module.sd2xmltv/
+rm -r unpack/
+exit 0
