@@ -1,0 +1,61 @@
+#!/bin/sh
+
+################################################################################
+#      This file is part of OpenELEC - http://www.openelec.tv
+#      Copyright (C) 2009-2014 Stephan Raue (stephan@openelec.tv)
+#
+#  OpenELEC is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  OpenELEC is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with OpenELEC.  If not, see <http://www.gnu.org/licenses/>.
+################################################################################
+
+. /etc/profile
+
+ADDON_HOME="$HOME/.kodi/userdata/addon_data/tools.module.sd2xmltv"
+ADDON_DIR="$HOME/.kodi/addons/tools.module.sd2xmltv"
+ADDON_SETTINGS="$ADDON_HOME/settings.xml"
+if [ $# -lt 1 ]
+then
+  CD=`pwd`
+  cd $ADDON_HOME
+  USERID=`grep id=\"User\" $ADDON_SETTINGS | awk '{print $3 }' | sed -e "s,value=,," -e "s,\",,g"`
+  PASSWORD=`grep id=\"Pass\" $ADDON_SETTINGS | awk '{print $3 }' | sed -e "s,value=,," -e "s,\",,g"`
+  python $ADDON_DIR/sd2xmltv.py -u $USERID -p $PASSWORD > sd2xmltv.log 2>&1 
+  cat xmltv.xml
+  cd $CD
+  exit 0
+fi
+
+while [ $# -gt 0 ]
+do case "$1" in
+   -d | --description )
+     printf "tv_grab_sd2xmltv is a simple wrapper for sd2xmltv.py\n"
+     ;;
+
+   -v | --version )
+     printf "0.1\n"
+     ;;
+
+   -c | --capabilities )
+     printf "baseline\n"
+     ;;
+
+    -* )
+      printf "unknown option: %s\n" "$1"
+      printf "Usage: %s: [--description] [--version] [--capabilities]\n" ${0##*/}
+      exit 2
+      ;;
+
+esac; shift
+done
+
+exit 0

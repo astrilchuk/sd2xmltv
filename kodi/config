@@ -1,0 +1,6 @@
+ADDON_VERSION=0.1.0
+DATEUTIL_VERSION=2.4.2
+SIX_VERSION=1.9.0
+
+DATEUTIL_URI=https://pypi.python.org/packages/source/p/python-dateutil/python-dateutil-${DATEUTIL_VERSION}.tar.gz
+SIX_URI=https://pypi.python.org/packages/source/s/six/six-${SIX_VERSION}.tar.gz

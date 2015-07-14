@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="tools.module.sd2xmltv"
+       name="sd2xmltv"
+       version="__VER__"
+       provider-name="astrilchuk">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+
+  </requires>
+  <extension point="xbmc.python.script" library="default.py">
+    <provides></provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary>Schedules Direct xmltv grabber</summary>
+    <description>
+Schedules Direct xmltv grabber using the JSON API
+    </description>
+    <disclaimer>
+
+    </disclaimer>
+    <platform>all</platform>
+  </extension>
+</addon>

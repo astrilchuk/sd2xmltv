@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<strings>
+
+	<!-- sd2xmltv -->
+	<string id="30000">user information</string>
+	<string id="30010">Schedules Direct Username</string>
+	<string id="30020">Schedules Direct Password</string>
+	
+</strings>
