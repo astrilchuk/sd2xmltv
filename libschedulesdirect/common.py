@@ -5,16 +5,55 @@ from datetime import datetime, timedelta
 from dateutil import parser
 import logging
 
-class Token(object):
+class ResponseStatus(object):
     def __init__(self):
         self.code = None
         """:type: int"""
+
+        self.response = None
+        """:type: unicode"""
 
         self.message = None
         """:type: unicode"""
 
         self.server_id = None
         """:type: unicode"""
+
+        self.date_time = None
+        """:type: datetime"""
+
+    @staticmethod
+    def decode(dct):
+        response_status = ResponseStatus()
+
+        if 'code' in dct:
+            response_status.code = dct['code']
+            del dct['code']
+        else:
+            return None
+
+        if 'response' in dct:
+            response_status.response = dct['response']
+            del dct['response']
+
+        if 'message' in dct:
+            response_status.message = dct['message']
+            del dct['message']
+
+        if 'serverID' in dct:
+            response_status.server_id = dct['serverID']
+            del dct['serverID']
+
+        if 'datetime' in dct:
+            response_status.date_time = parse_datetime(dct['datetime'])
+            del dct['datetime']
+
+        return response_status
+
+class Token(object):
+    def __init__(self):
+        self.response_status = None
+        """:type: ResponseStatus"""
 
         self.token = None
         """:type: unicode"""
@@ -30,17 +69,7 @@ class Token(object):
         """
         token = Token()
 
-        if 'code' in dct:
-            token.code = dct['code']
-            del dct['code']
-
-        if 'message' in dct:
-            token.message = dct['message']
-            del dct['message']
-
-        if 'serverID' in dct:
-            token.server_id = dct['serverID']
-            del dct['serverID']
+        token.response_status = ResponseStatus.decode(dct)
 
         if 'token' in dct:
             token.token = dct['token']
@@ -204,23 +233,11 @@ class Status(object):
 
 class AddRemoveLineupResponse(object):
     def __init__(self):
-        self.response = None
-        """:type: unicode"""
-
-        self.code = None
-        """:type: int"""
-
-        self.server_id = None
-        """:type: unicode"""
-
-        self.message = None
-        """:type: unicode"""
+        self.response_status = None
+        """:type: ResponseStatus"""
 
         self.changes_remaining = None
         """:type: int"""
-
-        self.date_time = None
-        """:type: datetime"""
 
     def __str__(self):
         return self.message
@@ -237,29 +254,11 @@ class AddRemoveLineupResponse(object):
         """
         add_remove_lineup_response = AddRemoveLineupResponse()
 
-        if 'response' in dct:
-            add_remove_lineup_response.response = dct['response']
-            del dct['response']
-
-        if 'code' in dct:
-            add_remove_lineup_response.code = dct['code']
-            del dct['code']
-
-        if 'serverID' in dct:
-            add_remove_lineup_response.server_id = dct['serverID']
-            del dct['serverID']
-
-        if 'message' in dct:
-            add_remove_lineup_response.message = dct['message']
-            del dct['message']
+        add_remove_lineup_response.response_status = ResponseStatus.decode(dct)
 
         if 'changesRemaining' in dct:
             add_remove_lineup_response.changes_remaining = dct['changesRemaining']
             del dct['changesRemaining']
-
-        if 'datetime' in dct:
-            add_remove_lineup_response.date_time = parse_datetime(dct['datetime'])
-            del dct['datetime']
 
         if len(dct) != 0:
             for key in dct.keys():
@@ -1534,6 +1533,9 @@ class ScheduleMetadata(object):
 
 class Schedule(object):
     def __init__(self):
+        self.response_status = None
+        """:type: ResponseStatus"""
+
         self.station_id = None
         """:type: unicode"""
 
@@ -1562,6 +1564,8 @@ class Schedule(object):
         :rtype: Schedule
         """
         schedule = Schedule()
+
+        schedule.response_status = ResponseStatus.decode(dct)
 
         if 'stationID' in dct:
             schedule.station_id = dct['stationID']

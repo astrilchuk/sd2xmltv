@@ -86,6 +86,12 @@ class Sd2Xmltv:
         for channel in self._enumerate_channels(lineup_mappings):
             programs_added = 0
             for schedule in channel.station.schedules:
+                # check for error statuses from SD - for example 7020 SCHEDULE RANGE EXCEEDED
+                # TODO: better handling of error responses
+                if schedule.response_status is not None and schedule.response_status.code != 0:
+                    self._logger.warn('Skipping day due to: ' + schedule.response_status.message)
+                    continue
+
                 self._logger.info('Adding programs on %s for channel %s.' %
                                   (schedule.metadata.start_date.strftime("%Y-%m-%d"),
                                   channel.get_display_names().next()))
@@ -146,6 +152,7 @@ class Sd2Xmltv:
             if postal_code == 'x':
                 break
 
+            # TODO: Handle more than just USA and CAN
             country = 'USA'
             if postal_code[0].isalpha():
                 country = 'CAN'
