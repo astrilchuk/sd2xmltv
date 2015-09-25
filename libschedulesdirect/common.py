@@ -1370,6 +1370,12 @@ class Program(object):
         self.holiday = None
         """:type: unicode"""
 
+        self.keywords = None
+        """:type: unicode"""
+
+        self.official_url = None
+        """:type: unicode"""
+
     def __str__(self):
         return u'{0} "{1}"'.format(self.program_id, self.titles.title120)
 
@@ -1484,6 +1490,14 @@ class Program(object):
         if 'holiday' in dct:
             program.holiday = dct['holiday']
             del dct['holiday']
+
+        if 'keyWords' in dct:
+            program.keywords = dct['keyWords']
+            del dct['keyWords']
+
+        if 'officialURL' in dct:
+            program.official_url = dct['officialURL']
+            del dct['officialURL']
 
         if len(dct) != 0:
             for key in dct.keys():
