@@ -194,7 +194,7 @@ class Sd2Xmltv:
 
                 response = self._sd.add_lineup(lineup.lineup_id)
 
-                print 'Schedules Direct returned \'%s\'.' % response.message
+                print 'Schedules Direct returned \'%s\'.' % response.response_status.message
                 print '%s lineup changes remaining.\n' % response.changes_remaining
 
     def _list_lineup_channels(self):
@@ -252,7 +252,7 @@ class Sd2Xmltv:
 
             response = self._sd.remove_lineup(lineup.lineup_id)
 
-            print '\nSchedules Direct returned \'%s\'.' % response.message
+            print '\nSchedules Direct returned \'%s\'.' % response.response_status.message
             print '%s lineup changes remaining.\n' % response.changes_remaining
 
     def _enumerate_channels(self, lineups):
