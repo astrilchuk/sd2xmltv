@@ -1376,6 +1376,9 @@ class Program(object):
         self.official_url = None
         """:type: unicode"""
 
+        self.entity_type = None
+        """:type: unicode"""
+
     def __str__(self):
         return u'{0} "{1}"'.format(self.program_id, self.titles.title120)
 
@@ -1498,6 +1501,10 @@ class Program(object):
         if 'officialURL' in dct:
             program.official_url = dct['officialURL']
             del dct['officialURL']
+
+        if 'entityType' in dct:
+            program.entity_type = dct['entityType']
+            del dct['entityType']
 
         if len(dct) != 0:
             for key in dct.keys():
