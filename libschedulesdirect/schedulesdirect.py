@@ -10,9 +10,7 @@ class SchedulesDirect(object):
 
     def __init__(self, username, password, cache_path = './sdcache.db'):
         self._logger = logging.getLogger(__name__)
-        self._username = username
-        self._password = password
-        self._api = SchedulesDirectApi(self._username, self._password)
+        self._api = SchedulesDirectApi(username, password)
         self._cache = SchedulesDirectCache(cache_path)
         self._cache.init_database()
         self._force_lineup_refresh = False
