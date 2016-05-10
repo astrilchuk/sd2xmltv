@@ -1,9 +1,11 @@
 #!/usr/bin/python
 # coding=utf-8
 
-from datetime import datetime, timedelta
-from dateutil import parser
+from datetime import date, datetime, timedelta
+from . import parse_date, parse_datetime, unique
 import logging
+import collections
+
 
 class ResponseStatus(object):
     def __init__(self):
@@ -22,33 +24,36 @@ class ResponseStatus(object):
         self.date_time = None
         """:type: datetime"""
 
-    @staticmethod
-    def decode(dct):
-        response_status = ResponseStatus()
+    @classmethod
+    def from_dict(cls, dct):
+        """
 
-        if 'code' in dct:
-            response_status.code = dct['code']
-            del dct['code']
+        :param dct:
+        :type dct: dict
+        :return:
+        :rtype: ResponseStatus
+        """
+        response_status = cls()
+
+        if "code" in dct:
+            response_status.code = dct.pop("code")
         else:
             return None
 
-        if 'response' in dct:
-            response_status.response = dct['response']
-            del dct['response']
+        if "response" in dct:
+            response_status.response = dct.pop("response")
 
-        if 'message' in dct:
-            response_status.message = dct['message']
-            del dct['message']
+        if "message" in dct:
+            response_status.message = dct.pop("message")
 
-        if 'serverID' in dct:
-            response_status.server_id = dct['serverID']
-            del dct['serverID']
+        if "serverID" in dct:
+            response_status.server_id = dct.pop("serverID")
 
-        if 'datetime' in dct:
-            response_status.date_time = parse_datetime(dct['datetime'])
-            del dct['datetime']
+        if "datetime" in dct:
+            response_status.date_time = parse_datetime(dct.pop("datetime"))
 
         return response_status
+
 
 class Token(object):
     def __init__(self):
@@ -58,8 +63,8 @@ class Token(object):
         self.token = None
         """:type: unicode"""
 
-    @staticmethod
-    def decode(dct):
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
@@ -67,19 +72,18 @@ class Token(object):
         :return:
         :rtype: Token
         """
-        token = Token()
+        token = cls()
 
-        token.response_status = ResponseStatus.decode(dct)
+        token.response_status = ResponseStatus.from_dict(dct)
 
-        if 'token' in dct:
-            token.token = dct['token']
-            del dct['token']
+        if "token" in dct:
+            token.token = dct.pop("token")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for Token: ' + key)
+            logging.warn("Key(s) not processed for Token: %s", ", ".join(dct.keys()))
 
         return token
+
 
 class StatusAccount(object):
     def __init__(self):
@@ -92,8 +96,8 @@ class StatusAccount(object):
         self.max_lineups = None
         """:type: int"""
 
-    @staticmethod
-    def decode(dct):
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
@@ -101,25 +105,22 @@ class StatusAccount(object):
         :return:
         :rtype: StatusAccount
         """
-        status_account = StatusAccount()
+        status_account = cls()
 
-        if 'expires' in dct:
-            status_account.expires = parse_datetime(dct['expires'])
-            del dct['expires']
+        if "expires" in dct:
+            status_account.expires = parse_datetime(dct.pop("expires"))
 
-        if 'messages' in dct:
-            status_account.messages = dct['messages']
-            del dct['messages']
+        if "messages" in dct:
+            status_account.messages = dct.pop("messages")
 
-        if 'maxLineups' in dct:
-            status_account.max_lineups = dct['maxLineups']
-            del dct['maxLineups']
+        if "maxLineups" in dct:
+            status_account.max_lineups = dct.pop("maxLineups")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for StatusAccount: ' + key)
+            logging.warn("Key(s) not processed for StatusAccount: %s", ", ".join(dct.keys()))
 
         return status_account
+
 
 class StatusSystem(object):
     def __init__(self):
@@ -135,31 +136,34 @@ class StatusSystem(object):
         self.message = None
         """:type: unicode"""
 
-    @staticmethod
-    def decode(dct):
-        system_status = StatusSystem()
+    @classmethod
+    def from_dict(cls, dct):
+        """
 
-        if 'date' in dct:
-            system_status.date = parse_datetime(dct['date'])
-            del dct['date']
+        :param dct:
+        :type dct: dict
+        :return:
+        :rtype: StatusSystem
+        """
+        system_status = cls()
 
-        if 'details' in dct:
-            system_status.details = dct['details']
-            del dct['details']
+        if "date" in dct:
+            system_status.date = parse_datetime(dct.pop("date"))
 
-        if 'status' in dct:
-            system_status.status = dct['status']
-            del dct['status']
+        if "details" in dct:
+            system_status.details = dct.pop("details")
 
-        if 'message' in dct:
-            system_status.message = dct['message']
-            del dct['message']
+        if "status" in dct:
+            system_status.status = dct.pop("status")
+
+        if "message" in dct:
+            system_status.message = dct.pop("message")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for StatusSystem: ' + key)
+            logging.warn("Key(s) not processed for StatusSystem: %s", ", ".join(dct.keys()))
 
         return system_status
+
 
 class Status(object):
     def __init__(self):
@@ -184,8 +188,8 @@ class Status(object):
         self.code = None
         """:type: int"""
 
-    @staticmethod
-    def decode(dct):
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
@@ -193,45 +197,37 @@ class Status(object):
         :return:
         :rtype: Status
         """
-        status = Status()
+        status = cls()
 
-        if 'account' in dct:
-            status.account = StatusAccount.decode(dct['account'])
-            del dct['account']
+        if "account" in dct:
+            status.account = StatusAccount.from_dict(dct.pop("account"))
 
-        if 'lineups' in dct:
-            for lineup in dct['lineups']:
-                status.lineups.append(Lineup.decode(lineup))
-            del dct['lineups']
+        if "lineups" in dct:
+            status.lineups = Lineup.from_iterable(dct.pop("lineups"))
 
-        if 'lastDataUpdate' in dct:
-            status.last_data_update = parse_datetime(dct['lastDataUpdate'])
-            del dct['lastDataUpdate']
+        if "lastDataUpdate" in dct:
+            status.last_data_update = parse_datetime(dct.pop("lastDataUpdate"))
 
-        if 'notifications' in dct:
-            status.notifications = dct['notifications']
-            del dct['notifications']
+        if "notifications" in dct:
+            status.notifications = dct.pop("notifications")
 
-        if 'systemStatus' in dct:
-            if len(dct['systemStatus']) != 0:
-                status.system_status = StatusSystem.decode(dct['systemStatus'][0])
-                del dct['systemStatus']
+        if "systemStatus" in dct:
+            if len(dct["systemStatus"]) != 0:
+                status.system_status = StatusSystem.from_dict(dct.pop("systemStatus")[0])
 
-        if 'serverID' in dct:
-            status.server_id = dct['serverID']
-            del dct['serverID']
+        if "serverID" in dct:
+            status.server_id = dct.pop("serverID")
 
-        if 'code' in dct:
-            status.code = dct['code']
-            del dct['code']
+        if "code" in dct:
+            status.code = dct.pop("code")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for Status: ' + key)
+            logging.warn("Key(s) not processed for Status: %s", ", ".join(dct.keys()))
 
         return status
 
-class AddRemoveLineupResponse(object):
+
+class ChangeLineupResponse(object):
     def __init__(self):
         self.response_status = None
         """:type: ResponseStatus"""
@@ -239,32 +235,33 @@ class AddRemoveLineupResponse(object):
         self.changes_remaining = None
         """:type: int"""
 
-    def __str__(self):
-        return self.message
-
     def __unicode__(self):
-        return self.message
+        return self.response_status.message
 
-    @staticmethod
-    def decode(dct):
+    def __str__(self):
+        return unicode(self).encode("utf-8")
+
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
+        :type dct: dict
         :return:
+        :rtype: ChangeLineupResponse
         """
-        add_remove_lineup_response = AddRemoveLineupResponse()
+        change_lineup_response = cls()
 
-        add_remove_lineup_response.response_status = ResponseStatus.decode(dct)
+        change_lineup_response.response_status = ResponseStatus.from_dict(dct)
 
-        if 'changesRemaining' in dct:
-            add_remove_lineup_response.changes_remaining = dct['changesRemaining']
-            del dct['changesRemaining']
+        if "changesRemaining" in dct:
+            change_lineup_response.changes_remaining = dct.pop("changesRemaining")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for AddLineupResponse: ' + key)
+            logging.warn("Key(s) not processed for ChangeLineupResponse: %s", ", ".join(dct.keys()))
 
-        return add_remove_lineup_response
+        return change_lineup_response
+
 
 class Lineup(object):
     def __init__(self):
@@ -286,52 +283,62 @@ class Lineup(object):
         self.uri = None
         """:type: unicode"""
 
-    def __str__(self):
-        return self.lineup_id
+        self.is_deleted = False
+        """:type: bool"""
 
     def __unicode__(self):
         return self.lineup_id
 
-    @staticmethod
-    def decode(dct):
+    def __str__(self):
+        return unicode(self).encode("utf-8")
+
+    @classmethod
+    def from_iterable(cls, iterable):
+        """
+
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
+        :return:
+        :rtype: list[Lineup]
+        """
+        return [cls.from_dict(lineup) for lineup in iterable]
+
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
+        :type dct: dict
         :return:
+        :rtype: Lineup
         """
-        lineup = Lineup()
+        lineup = cls()
 
-        if 'lineup' in dct:
-            lineup.lineup_id = dct['lineup']
-            del dct['lineup']
+        lineup.lineup_id = dct.pop("lineup")
 
-        if 'name' in dct:
-            lineup.name = dct['name']
-            del dct['name']
+        if "name" in dct:
+            lineup.name = dct.pop("name")
 
-        if 'transport' in dct:
-            lineup.transport = dct['transport']
-            del dct['transport']
+        if "transport" in dct:
+            lineup.transport = dct.pop("transport")
 
-        if 'location' in dct:
-            lineup.location = dct['location']
-            del dct['location']
+        if "location" in dct:
+            lineup.location = dct.pop("location")
 
-        if 'modified' in dct:
-            lineup.modified = parse_datetime(dct['modified'])
-            del dct['modified']
+        if "modified" in dct:
+            lineup.modified = parse_datetime(dct.pop("modified"))
 
-        if 'uri' in dct:
-            lineup.uri = dct['uri']
-            if lineup.lineup_id is None:
-                lineup.lineup_id = lineup.uri.split('/')[3]
-            del dct['uri']
+        if "uri" in dct:
+            lineup.uri = dct.pop("uri")
+
+        if "isDeleted" in dct:
+            lineup.is_deleted = dct.pop("isDeleted")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for Lineup: ' + key)
+            logging.warn("Key(s) not processed for Lineup: %s", ", ".join(dct.keys()))
 
         return lineup
+
 
 class Headend(object):
     def __init__(self):
@@ -347,114 +354,107 @@ class Headend(object):
         self.lineups = []
         """:type: list[Lineup]"""
 
-    def __str__(self):
-        return '{0} / {1} / {2}'.format(self.headend_id, self.transport, self.location)
-
     def __unicode__(self):
-        return '{0} / {1} / {2}'.format(self.headend_id, self.transport, self.location)
-
-    @staticmethod
-    def decode(dct):
-        """
-
-        :param headend_id:
-        :param dct:
-        :return:
-        """
-        headend = Headend()
-
-        if 'headend' in dct:
-            headend.headend_id = dct['headend']
-            del dct['headend']
-
-        if 'transport' in dct:
-            headend.type = dct['transport']
-            del dct['transport']
-
-        if 'location' in dct:
-            headend.location = dct['location']
-            del dct['location']
-
-        if 'lineups' in dct:
-            for lineup in dct['lineups']:
-                headend.lineups.append(Lineup.decode(lineup))
-            del dct['lineups']
-
-        if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for Headend: ' + key)
-
-        return headend
-
-class LineupMapping(object):
-    def __init__(self):
-        self.channels = []
-        """:type: list[Channel]"""
-
-        self.stations = []
-        """:type: list[Station]"""
-
-        self.metadata = None
-        """:type: Lineup"""
+        return u"{0.headend_id} / {0.transport} / {0.location}".format(self)
 
     def __str__(self):
-        return self.metadata.lineup_id
+        return unicode(self).encode("utf-8")
 
-    def __unicode__(self):
-        return self.metadata.lineup_id
-
-    @staticmethod
-    def decode(dct):
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
         :type dct: dict
         :return:
-        :rtype: Lineup
+        :rtype: Headend
         """
-        lineup_mapping = LineupMapping()
+        headend = cls()
 
-        if 'stations' in dct:
-            for station in dct['stations']:
-                lineup_mapping.stations.append(Station.decode(station))
-            del dct['stations']
+        headend.headend_id = dct.pop("headend")
 
-        if 'map' in dct:
-            for channel in dct['map']:
-                channel = Channel.decode(channel)
-                channel.lineup_mapping = lineup_mapping
-                lineup_mapping.channels.append(channel)
-            del dct['map']
+        headend.type = dct.pop("transport")
 
-        for channel in lineup_mapping.channels:
-            channel.station = lineup_mapping.get_station(channel.station_id)
+        headend.location = dct.pop("location")
 
-        if 'metadata' in dct:
-            lineup_mapping.lineup = Lineup.decode(dct['metadata'])
-            del dct['metadata']
+        headend.lineups = Lineup.from_iterable(dct.pop("lineups"))
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for LineupMapping: ' + key)
+            logging.warn("Key(s) not processed for Headend: %s", ", ".join(dct.keys()))
 
-        return lineup_mapping
+        return headend
+
+
+class LineupMap(object):
+    def __init__(self):
+        self.channels = None
+        """:type: list[Channel]"""
+
+        self.stations = None
+        """:type: list[Station]"""
+
+        self.lineup = None
+        """:type: Lineup"""
+
+    def __unicode__(self):
+        return u"LineupMap for Lineup {0.lineup_id}".format(self)
+
+    def __str__(self):
+        return unicode(self).encode("utf-8")
+
+    @classmethod
+    def from_dict(cls, dct):
+        """
+
+        :param dct:
+        :type dct: dict
+        :return:
+        :rtype: LineupMap
+        """
+        lineup_map = cls()
+
+        lineup_map.stations = Station.from_iterable(dct.pop("stations"))
+
+        lineup_map.channels = Channel.from_iterable(dct.pop("map"))
+
+        for channel in lineup_map.channels:
+            channel.station = lineup_map.get_station(channel.station_id)
+
+        lineup_map.lineup = Lineup.from_dict(dct.pop("metadata"))
+
+        if len(dct) != 0:
+            logging.warn("Key(s) not processed for LineupMap: %s", ", ".join(dct.keys()))
+
+        return lineup_map
 
     def get_station(self, station_id):
         """
 
         :param station_id:
-        :type station_id: str
+        :type station_id: unicode
         :return:
         :rtype: Station
         """
-        matches = [station for station in self.stations if station.station_id == station_id]
-        if len(matches) == 0:
-            return None
-        return matches[0]
+        return next((station for station in self.stations if station.station_id == station_id), None)
+
+
+class LineupMapList(list):
+    def __init__(self, *args, **kwargs):
+        super(LineupMapList, self).__init__(*args, **kwargs)
+
+    def unique_channels(self, channel_filter=None):
+        return unique((channel
+                       for lineup_map in self
+                       for channel in lineup_map.channels
+                       if channel_filter is None or channel.channel in channel_filter), lambda c: c.get_unique_id())
+
+    def unique_stations(self, channel_filter=None):
+        return unique((channel.station
+                       for channel in self.unique_channels(channel_filter)), lambda s: s.station_id)
+
 
 class Channel(object):
     def __init__(self):
-
         # Common
         self.station_id = None
         """:type: unicode"""
@@ -464,9 +464,6 @@ class Channel(object):
 
         self.channel = None
         """:type: unicode"""
-
-        self.lineup_mapping = None
-        """:type: LineupMapping"""
 
         # Antenna
         self.atsc_major = None
@@ -508,29 +505,38 @@ class Channel(object):
         """:type: unicode"""
 
     def get_display_names(self):
-        if self.atsc_major is not None:
-            yield '%s.%s %s' % (self.atsc_major, self.atsc_minor, self.station.callsign)
-            yield '%s.%s' % (self.atsc_major, self.atsc_minor)
+        if self.channel is not None:
+            yield u"{0.channel} {1.callsign}".format(self, self.station)
+            yield self.channel
 
         if self.uhf_vhf is not None:
-            yield '%s %s fcc' % (self.uhf_vhf, self.station.callsign)
-
-        if self.channel is not None:
-            yield '%s %s' % (self.channel, self.station.callsign)
-            yield self.channel
+            yield u"{0.uhf_vhf} {1.callsign} fcc".format(self, self.station)
 
         yield self.station.callsign
         yield self.station.name
 
-    # TODO: Xmltv specific, move out of schedulesdirect
     def get_unique_id(self):
-        return 'I{0}.{1}.schedulesdirect.org'.format(self.channel, self.station_id)
+        return "I{0.channel}.{0.station_id}.schedulesdirect.org".format(self)
+
+    def __unicode__(self):
+        return u"Channel {0.channel}".format(self)
 
     def __str__(self):
-        return self.get_unique_id()
+        return unicode(self).encode("utf-8")
 
-    @staticmethod
-    def decode(dct):
+    @classmethod
+    def from_iterable(cls, iterable):
+        """
+
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
+        :return:
+        :rtype: list[Channel]
+        """
+        return [cls.from_dict(channel) for channel in iterable]
+
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
@@ -538,79 +544,64 @@ class Channel(object):
         :return:
         :rtype: Channel
         """
-        channel = Channel()
+        channel = cls()
 
-        if 'stationID' in dct:
-            channel.station_id = dct['stationID']
-            del dct['stationID']
+        channel.station_id = dct.pop("stationID")
 
-        if 'channel' in dct:
-            channel.channel = dct['channel']
-            del dct['channel']
+        if "channel" in dct:
+            channel.channel = dct.pop("channel")
 
         # Antenna
 
-        if 'atscMajor' in dct:
-            channel.atsc_major = dct['atscMajor']
-            del dct['atscMajor']
+        if "atscMajor" in dct:
+            channel.atsc_major = dct.pop("atscMajor")
 
-        if 'atscMinor' in dct:
-            channel.atsc_minor = dct['atscMinor']
-            del dct['atscMinor']
+        if "atscMinor" in dct:
+            channel.atsc_minor = dct.pop("atscMinor")
 
-        if 'uhfVhf' in dct:
-            channel.uhf_vhf = dct['uhfVhf']
-            del dct['uhfVhf']
+        if "uhfVhf" in dct:
+            channel.uhf_vhf = dct.pop("uhfVhf")
 
         if channel.channel is None and channel.atsc_major is not None and channel.atsc_minor is not None:
-            channel.channel = '{0}.{1}'.format(channel.atsc_major, channel.atsc_minor)
+            channel.channel = u"{0.atsc_major}.{0.atsc_minor}".format(channel)
 
         if channel.channel is None and channel.uhf_vhf is not None:
             channel.channel = str(channel.uhf_vhf)
 
         # DVB-T/C/S
 
-        if 'frequencyHz' in dct:
-            channel.frequency_hz = dct['frequencyHz']
-            del dct['frequencyHz']
+        if "frequencyHz" in dct:
+            channel.frequency_hz = dct.pop("frequencyHz")
 
-        if 'deliverySystem' in dct:
-            channel.delivery_system = dct['deliverySystem']
-            del dct['deliverySystem']
+        if "deliverySystem" in dct:
+            channel.delivery_system = dct.pop("deliverySystem")
 
-        if 'modulationSystem' in dct:
-            channel.modulation_system = dct['modulationSystem']
-            del dct['modulationSystem']
+        if "modulationSystem" in dct:
+            channel.modulation_system = dct.pop("modulationSystem")
 
-        if 'symbolrate' in dct:
-            channel.symbol_rate = dct['symbolrate']
-            del dct['symbolrate']
+        if "symbolrate" in dct:
+            channel.symbol_rate = dct.pop("symbolrate")
 
-        if 'serviceID' in dct:
-            channel.service_id = dct['serviceID']
-            del dct['serviceID']
+        if "serviceID" in dct:
+            channel.service_id = dct.pop("serviceID")
 
-        if 'networkID' in dct:
-            channel.network_id = dct['networkID']
-            del dct['networkID']
+        if "networkID" in dct:
+            channel.network_id = dct.pop("networkID")
 
-        if 'transportID' in dct:
-            channel.transport_id = dct['transportID']
-            del dct['transportID']
+        if "transportID" in dct:
+            channel.transport_id = dct.pop("transportID")
 
-        if 'polarization' in dct:
-            channel.polarization = dct['polarization']
-            del dct['polarization']
+        if "polarization" in dct:
+            channel.polarization = dct.pop("polarization")
 
-        if 'fec' in dct:
-            channel.fec = dct['fec']
-            del dct['fec']
+        if "fec" in dct:
+            channel.fec = dct.pop("fec")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for Channel: ' + key)
+            logging.warn("Key(s) not processed for Channel: %s", ", ".join(dct.keys()))
 
         return channel
+
 
 class Broadcaster(object):
     def __init__(self):
@@ -626,36 +617,40 @@ class Broadcaster(object):
         self.country = None
         """:type: unicode"""
 
-    @staticmethod
-    def decode(dct):
+    def __unicode__(self):
+        return u"Broadcaster in {0.city}, {0.state}, {0.country}, {0.postalcode}".format(self)
+
+    def __str__(self):
+        return unicode(self).encode("utf-8")
+
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
+        :type dct: dict
         :return:
+        :rtype: Broadcaster
         """
-        broadcaster = Broadcaster()
+        broadcaster = cls()
 
-        if 'city' in dct:
-            broadcaster.city = dct['city']
-            del dct['city']
+        if "city" in dct:
+            broadcaster.city = dct.pop("city")
 
-        if 'state' in dct:
-            broadcaster.state = dct['state']
-            del dct['state']
+        if "state" in dct:
+            broadcaster.state = dct.pop("state")
 
-        if 'postalcode' in dct:
-            broadcaster.postalcode = dct['postalcode']
-            del dct['postalcode']
+        if "postalcode" in dct:
+            broadcaster.postalcode = dct.pop("postalcode")
 
-        if 'country' in dct:
-            broadcaster.country = dct['country']
-            del dct['country']
+        if "country" in dct:
+            broadcaster.country = dct.pop("country")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for Broadcaster: ' + key)
+            logging.warn("Key(s) not processed for Broadcaster: %s", ", ".join(dct.keys()))
 
         return broadcaster
+
 
 class StationLogo(object):
     def __init__(self):
@@ -671,8 +666,14 @@ class StationLogo(object):
         self.width = None
         """:type: int"""
 
-    @staticmethod
-    def decode(dct):
+    def __unicode__(self):
+        return u"Station Logo {0.width}x{0.height}".format(self)
+
+    def __str__(self):
+        return unicode(self).encode("utf-8")
+
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
@@ -680,29 +681,25 @@ class StationLogo(object):
         :return:
         :rtype: StationLogo
         """
-        station_logo = StationLogo()
+        station_logo = cls()
 
-        if 'URL' in dct:
-            station_logo.url = dct['URL']
-            del dct['URL']
+        if "URL" in dct:
+            station_logo.url = dct.pop("URL")
 
-        if 'height' in dct:
-            station_logo.height = dct['height']
-            del dct['height']
+        if "height" in dct:
+            station_logo.height = dct.pop("height")
 
-        if 'width' in dct:
-            station_logo.width = dct['width']
-            del dct['width']
+        if "width" in dct:
+            station_logo.width = dct.pop("width")
 
-        if 'md5' in dct:
-            station_logo.md5 = dct['md5']
-            del dct['md5']
+        if "md5" in dct:
+            station_logo.md5 = dct.pop("md5")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for StationLogo: ' + key)
+            logging.warn("Key(s) not processed for StationLogo: %s", ", ".join(dct.keys()))
 
         return station_logo
+
 
 class Station(object):
     def __init__(self):
@@ -718,10 +715,10 @@ class Station(object):
         self.affiliate = None
         """:type: unicode"""
 
-        self.broadcast_language = []
+        self.broadcast_languages = []
         """:type: list[unicode]"""
 
-        self.description_language = []
+        self.description_languages = []
         """:type: list[unicode]"""
 
         self.broadcaster = None
@@ -736,17 +733,25 @@ class Station(object):
         self.affiliate = None
         """:type: unicode"""
 
-        self.schedules = None
-        """:type: list[Schedule]"""
-
-    def __str__(self):
-        return self.name
-
     def __unicode__(self):
         return self.name
 
-    @staticmethod
-    def decode(dct):
+    def __str__(self):
+        return unicode(self).encode("utf-8")
+
+    @classmethod
+    def from_iterable(cls, iterable):
+        """
+
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
+        :return:
+        :rtype: list[Station]
+        """
+        return [cls.from_dict(station) for station in iterable]
+
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
@@ -754,78 +759,67 @@ class Station(object):
         :return:
         :rtype: Station
         """
-        station = Station()
+        station = cls()
 
-        if 'stationID' in dct:
-            station.station_id = dct['stationID']
-            del dct['stationID']
+        station.station_id = dct.pop("stationID")
 
-        if 'callsign' in dct:
-            station.callsign = dct['callsign']
-            del dct['callsign']
+        if "callsign" in dct:
+            station.callsign = dct.pop("callsign")
 
-        if 'name' in dct:
-            station.name = dct['name']
-            del dct['name']
+        if "name" in dct:
+            station.name = dct.pop("name")
 
-        if 'affiliate' in dct:
-            station.affiliate = dct['affiliate']
-            del dct['affiliate']
+        if "affiliate" in dct:
+            station.affiliate = dct.pop("affiliate")
 
-        if 'broadcastLanguage' in dct:
-            for broadcast_language in dct['broadcastLanguage']:
-                station.broadcast_language.append(broadcast_language)
-            del dct['broadcastLanguage']
+        if "broadcastLanguage" in dct:
+            station.broadcast_languages = dct.pop("broadcastLanguage")
 
-        if 'descriptionLanguage' in dct:
-            for description_language in dct['descriptionLanguage']:
-                station.description_language.append(description_language)
-            del dct['descriptionLanguage']
+        if "descriptionLanguage" in dct:
+            station.description_languages = dct.pop("descriptionLanguage")
 
-        if 'broadcaster' in dct:
-            station.broadcaster = Broadcaster.decode(dct['broadcaster'])
-            del dct['broadcaster']
+        if "broadcaster" in dct:
+            station.broadcaster = Broadcaster.from_dict(dct.pop("broadcaster"))
 
-        if 'logo' in dct:
-            station.logo = StationLogo.decode(dct['logo'])
-            del dct['logo']
+        if "logo" in dct:
+            station.logo = StationLogo.from_dict(dct.pop("logo"))
 
-        if 'isCommercialFree' in dct:
-            station.is_commercial_free = dct['isCommercialFree']
-            del dct['isCommercialFree']
+        if "isCommercialFree" in dct:
+            station.is_commercial_free = dct.pop("isCommercialFree")
 
-        if 'affiliate' in dct:
-            station.affiliate = dct['affiliate']
-            del dct['affiliate']
+        if "affiliate" in dct:
+            station.affiliate = dct.pop("affiliate")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for Station: ' + key)
+            logging.warn("Key(s) not processed for Station: %s", ", ".join(dct.keys()))
 
         return station
+
 
 class ProgramTitles(object):
     def __init__(self):
         self.title120 = None
         """:type: unicode"""
 
-    @staticmethod
-    def decode(arr):
+    @classmethod
+    def from_iterable(cls, iterable):
         """
 
-        :param arr:
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
         :return:
+        :rtype: ProgramTitles
         """
-        program_titles = ProgramTitles()
+        program_titles = cls()
 
-        for item in arr:
-            if 'title120' in item:
-                program_titles.title120 = item['title120']
-                del item['title120']
+        for item in iterable:
+            if "title120" in item:
+                program_titles.title120 = item.pop("title120")
             else:
-                logging.warn('Titles not processed: ' + str(item))
+                logging.warn("Titles not processed: %s", str(item))
 
         return program_titles
+
 
 class SeasonEpisode(object):
     def __init__(self):
@@ -835,8 +829,8 @@ class SeasonEpisode(object):
         self.episode = None
         """:type : int"""
 
-    @staticmethod
-    def decode(dct):
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
@@ -844,54 +838,70 @@ class SeasonEpisode(object):
         :return:
         :rtype: SeasonEpisode
         """
-        season_episode = SeasonEpisode()
+        season_episode = cls()
 
-        if 'season' in dct:
-            season_episode.season = dct['season']
-            del dct['season']
+        season_episode.season = dct.pop("season")
 
-        if 'episode' in dct:
-            season_episode.episode = dct['episode']
-            del dct['episode']
+        season_episode.episode = dct.pop("episode")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for SeasonEpisode: ' + key)
+            logging.warn("Key(s) not processed for SeasonEpisode: %s", ", ".join(dct.keys()))
 
         return season_episode
+
 
 class ProgramMetadata(object):
     def __init__(self):
         self.season_episode = None
         """:type : SeasonEpisode"""
 
-    @staticmethod
-    def decode(arr):
+    @classmethod
+    def from_iterable(cls, iterable):
         """
 
-        :param arr:
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
         :return:
+        :rtype: ProgramMetadata
         """
-        program_metadata = ProgramMetadata()
-        for item in arr:
-            if 'Gracenote' in item:
-                program_metadata.season_episode = SeasonEpisode.decode(item['Gracenote'])
-                del item['Gracenote']
+        program_metadata = cls()
+
+        for item in iterable:
+            if "Gracenote" in item:
+                program_metadata.season_episode = SeasonEpisode.from_dict(item.pop("Gracenote"))
             else:
-                logging.warn('Program metadata not processed: ' + str(item))
+                logging.warn("Program metadata not processed: %s", str(item))
 
         return program_metadata
 
+
 class ProgramDescription(object):
     def __init__(self):
-        self.description = None
+        self.text = None
         """:type: unicode"""
 
         self.language = None
         """:type: unicode"""
 
-    @staticmethod
-    def decode(dct):
+    def __unicode__(self):
+        return self.text
+
+    def __str__(self):
+        return unicode(self).encode("utf-8")
+
+    @classmethod
+    def from_iterable(cls, iterable):
+        """
+
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
+        :return:
+        :rtype: list[ProgramDescription]
+        """
+        return [cls.from_dict(description) for description in iterable]
+
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
@@ -899,56 +909,57 @@ class ProgramDescription(object):
         :return:
         :rtype: ProgramDescription
         """
-        program_description = ProgramDescription()
+        program_description = cls()
 
-        if 'description' in dct:
-            program_description.description = dct['description']
-            del dct['description']
+        program_description.text = dct.pop("description")
 
-        if 'descriptionLanguage' in dct:
-            program_description.language = dct['descriptionLanguage']
-            del dct['descriptionLanguage']
+        if "descriptionLanguage" in dct:
+            program_description.language = dct.pop("descriptionLanguage")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for QualityRating: ' + key)
+            logging.warn("Key(s) not processed for ProgramDescription: %s", ", ".join(dct.keys()))
 
         return program_description
 
-class ProgramDescriptions(object):
-    def __init__(self):
-        self.description100 = []
-        """:type: list[ProgramDescription]"""
 
-        self.description1000 = []
-        """:type: list[ProgramDescription]"""
+class ProgramDescriptionList(list):
+    def __init__(self, *args, **kwargs):
+        super(ProgramDescriptionList, self).__init__(*args, **kwargs)
 
-    @staticmethod
-    def decode(dct):
+    def languages(self):
+        return list({description.language for description in self})
+
+    def ordered_by_text_length(self, reverse=False):
+        return sorted(self, key=lambda description: len(description.text), reverse=reverse)
+
+    def get_shortest_text(self, language="en"):
+        return next((description.text for description in self.ordered_by_text_length(False) if description.language == language), None)
+
+    def get_longest_text(self, language="en"):
+        return next((description.text for description in self.ordered_by_text_length(True) if description.language == language), None)
+
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
         :type dct: dict
         :return:
-        :rtype: ProgramDescriptions
+        :rtype: ProgramDescriptionList
         """
-        program_descriptions = ProgramDescriptions()
+        program_description_list = cls()
 
-        if 'description100' in dct:
-            for description in dct['description100']:
-                program_descriptions.description100.append(ProgramDescription.decode(description))
-            del dct['description100']
+        if "description100" in dct:
+            program_description_list.extend(ProgramDescription.from_iterable(dct.pop("description100")))
 
-        if 'description1000' in dct:
-            for description in dct['description1000']:
-                program_descriptions.description1000.append(ProgramDescription.decode(description))
-            del dct['description1000']
+        if "description1000" in dct:
+            program_description_list.extend(ProgramDescription.from_iterable(dct.pop("description1000")))
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for ProgramDescriptions: ' + key)
+            logging.warn("Key(s) not processed for ProgramDescriptions: %s", ", ".join(dct.keys()))
 
-        return program_descriptions
+        return program_description_list
+
 
 class QualityRating(object):
     def __init__(self):
@@ -970,13 +981,24 @@ class QualityRating(object):
     def get_stars(self):
         rating_float = float(self.rating)
         rating_int = int(rating_float)
-        stars_str = unichr(0x2606) * rating_int
+        stars_str = u"*" * rating_int  # unichr(0x2606) * rating_int
         if rating_float - rating_int > 0:
             stars_str += unichr(0x00BD)
         return stars_str
 
-    @staticmethod
-    def decode(dct):
+    @classmethod
+    def from_iterable(cls, iterable):
+        """
+
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
+        :return:
+        :rtype: list[QualityRating]
+        """
+        return [QualityRating.from_dict(quality_rating) for quality_rating in iterable]
+
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
@@ -984,33 +1006,28 @@ class QualityRating(object):
         :return:
         :rtype: QualityRating
         """
-        quality_rating = QualityRating()
+        quality_rating = cls()
 
-        if 'increment' in dct:
-            quality_rating.increment = dct['increment']
-            del dct['increment']
+        if "increment" in dct:
+            quality_rating.increment = dct.pop("increment")
 
-        if 'maxRating' in dct:
-            quality_rating.max_rating = dct['maxRating']
-            del dct['maxRating']
+        if "maxRating" in dct:
+            quality_rating.max_rating = dct.pop("maxRating")
 
-        if 'minRating' in dct:
-            quality_rating.min_rating = dct['minRating']
-            del dct['minRating']
+        if "minRating" in dct:
+            quality_rating.min_rating = dct.pop("minRating")
 
-        if 'rating' in dct:
-            quality_rating.rating = dct['rating']
-            del dct['rating']
+        if "rating" in dct:
+            quality_rating.rating = dct.pop("rating")
 
-        if 'ratingsBody' in dct:
-            quality_rating.ratings_body = dct['ratingsBody']
-            del dct['ratingsBody']
+        if "ratingsBody" in dct:
+            quality_rating.ratings_body = dct.pop("ratingsBody")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for QualityRating: ' + key)
+            logging.warn("Key(s) not processed for QualityRating: %s", ", ".join(dct.keys()))
 
         return quality_rating
+
 
 class ProgramMovie(object):
     def __init__(self):
@@ -1023,8 +1040,8 @@ class ProgramMovie(object):
         self.year = None
         """:type: unicode"""
 
-    @staticmethod
-    def decode(dct):
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
@@ -1032,26 +1049,22 @@ class ProgramMovie(object):
         :return:
         :rtype: ProgramMovie
         """
-        program_movie = ProgramMovie()
+        program_movie = cls()
 
-        if 'duration' in dct:
-            program_movie.duration = dct['duration']
-            del dct['duration']
+        if "duration" in dct:
+            program_movie.duration = dct.pop("duration")
 
-        if 'qualityRating' in dct:
-            for quality_rating in dct['qualityRating']:
-                program_movie.quality_ratings.append(QualityRating.decode(quality_rating))
-            del dct['qualityRating']
+        if "qualityRating" in dct:
+            program_movie.quality_ratings = QualityRating.from_iterable(dct.pop("qualityRating"))
 
-        if 'year' in dct:
-            program_movie.year = dct['year']
-            del dct['year']
+        if "year" in dct:
+            program_movie.year = dct.pop("year")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for ProgramMovie: ' + key)
+            logging.warn("Key(s) not processed for ProgramMovie: %s", ", ".join(dct.keys()))
 
         return program_movie
+
 
 class ProgramContentRating(object):
     def __init__(self):
@@ -1061,11 +1074,25 @@ class ProgramContentRating(object):
         self.code = None
         """:type: unicode"""
 
-    def __str__(self):
-        return u'{0}: {1}'.format(self.body, self.code)
+    def __unicode__(self):
+        return u"{0.body}: {0.code}".format(self)
 
-    @staticmethod
-    def decode(dct):
+    def __str__(self):
+        return unicode(self).encode("utf-8")
+
+    @classmethod
+    def from_iterable(cls, iterable):
+        """
+
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
+        :return:
+        :rtype: list[ProgramContentRating]
+        """
+        return [cls.from_dict(content_rating) for content_rating in iterable]
+
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
@@ -1073,21 +1100,19 @@ class ProgramContentRating(object):
         :return:
         :rtype: ProgramContentRating
         """
-        program_content_rating = ProgramContentRating()
+        program_content_rating = cls()
 
-        if 'body' in dct:
-            program_content_rating.body = dct['body']
-            del dct['body']
+        if "body" in dct:
+            program_content_rating.body = dct.pop("body")
 
-        if 'code' in dct:
-            program_content_rating.code = dct['code']
-            del dct['code']
+        if "code" in dct:
+            program_content_rating.code = dct.pop("code")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for ProgramContentRating: ' + key)
+            logging.warn("Key(s) not processed for ProgramContentRating: %s", ", ".join(dct.keys()))
 
         return program_content_rating
+
 
 class ProgramRecommendation(object):
     def __init__(self):
@@ -1097,8 +1122,19 @@ class ProgramRecommendation(object):
         self.title120 = None
         """:type: unicode"""
 
-    @staticmethod
-    def decode(dct):
+    @classmethod
+    def from_iterable(cls, iterable):
+        """
+
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
+        :return:
+        :rtype: ProgramRecommendation
+        """
+        return [cls.from_dict(recommendation) for recommendation in iterable]
+
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
@@ -1106,21 +1142,19 @@ class ProgramRecommendation(object):
         :return:
         :rtype: ProgramRecommendation
         """
-        program_recommendation = ProgramRecommendation()
+        program_recommendation = cls()
 
-        if 'programID' in dct:
-            program_recommendation.program_id = dct['programID']
-            del dct['programID']
+        if "programID" in dct:
+            program_recommendation.program_id = dct.pop("programID")
 
-        if 'title120' in dct:
-            program_recommendation.title120 = dct['title120']
-            del dct['title120']
+        if "title120" in dct:
+            program_recommendation.title120 = dct.pop("title120")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for ProgramRecommendation: ' + key)
+            logging.warn("Key(s) not processed for ProgramRecommendation: %s", ", ".join(dct.keys()))
 
         return program_recommendation
+
 
 class ProgramCast(object):
     def __init__(self):
@@ -1146,41 +1180,53 @@ class ProgramCast(object):
         return self.name
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return unicode(self).encode("utf-8")
 
-    @staticmethod
-    def decode(dct):
-        program_cast = ProgramCast()
+    @classmethod
+    def from_iterable(cls, iterable):
+        """
 
-        if 'personId' in dct:
-            program_cast.person_id = dct['personId']
-            del dct['personId']
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
+        :return:
+        :rtype: list[ProgramCast]
+        """
+        return [cls.from_dict(cast) for cast in iterable]
 
-        if 'nameId' in dct:
-            program_cast.name_id = dct['nameId']
-            del dct['nameId']
+    @classmethod
+    def from_dict(cls, dct):
+        """
 
-        if 'billingOrder' in dct:
-            program_cast.billing_order = dct['billingOrder']
-            del dct['billingOrder']
+        :param dct:
+        :type dct: dict
+        :return:
+        :rtype: ProgramCast
+        """
+        program_cast = cls()
 
-        if 'role' in dct:
-            program_cast.role = dct['role']
-            del dct['role']
+        if "personId" in dct:
+            program_cast.person_id = dct.pop("personId")
 
-        if 'name' in dct:
-            program_cast.name = dct['name']
-            del dct['name']
+        if "nameId" in dct:
+            program_cast.name_id = dct.pop("nameId")
 
-        if 'characterName' in dct:
-            program_cast.character_name = dct['characterName']
-            del dct['characterName']
+        if "billingOrder" in dct:
+            program_cast.billing_order = dct.pop("billingOrder")
+
+        if "role" in dct:
+            program_cast.role = dct.pop("role")
+
+        if "name" in dct:
+            program_cast.name = dct.pop("name")
+
+        if "characterName" in dct:
+            program_cast.character_name = dct.pop("characterName")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for ProgramCast: ' + key)
+            logging.warn("Key(s) not processed for ProgramCast: %s", ", ".join(dct.keys()))
 
         return program_cast
+
 
 class ProgramCrew(object):
     def __init__(self):
@@ -1203,37 +1249,50 @@ class ProgramCrew(object):
         return self.name
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return unicode(self).encode("utf-8")
 
-    @staticmethod
-    def decode(dct):
-        program_crew = ProgramCrew()
+    @classmethod
+    def from_iterable(cls, iterable):
+        """
 
-        if 'personId' in dct:
-            program_crew.person_id = dct['personId']
-            del dct['personId']
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
+        :return:
+        :rtype: list[ProgramCrew]
+        """
+        return [cls.from_dict(crew) for crew in iterable]
 
-        if 'nameId' in dct:
-            program_crew.name_id = dct['nameId']
-            del dct['nameId']
+    @classmethod
+    def from_dict(cls, dct):
+        """
 
-        if 'billingOrder' in dct:
-            program_crew.billing_order = dct['billingOrder']
-            del dct['billingOrder']
+        :param dct:
+        :type dct: dict
+        :return:
+        :rtype: ProgramCrew
+        """
+        program_crew = cls()
 
-        if 'role' in dct:
-            program_crew.role = dct['role']
-            del dct['role']
+        if "personId" in dct:
+            program_crew.person_id = dct.pop("personId")
 
-        if 'name' in dct:
-            program_crew.name = dct['name']
-            del dct['name']
+        if "nameId" in dct:
+            program_crew.name_id = dct.pop("nameId")
+
+        if "billingOrder" in dct:
+            program_crew.billing_order = dct.pop("billingOrder")
+
+        if "role" in dct:
+            program_crew.role = dct.pop("role")
+
+        if "name" in dct:
+            program_crew.name = dct.pop("name")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for ProgramCrew: ' + key)
+            logging.warn("Key(s) not processed for ProgramCrew: %s", ", ".join(dct.keys()))
 
         return program_crew
+
 
 class EventTeam(object):
     def __init__(self):
@@ -1243,28 +1302,28 @@ class EventTeam(object):
         self.is_home = False
         """:type: bool"""
 
-    @staticmethod
-    def decode(dct):
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
+        :type dct: dict
         :return:
+        :rtype: EventTeam
         """
-        event_team = EventTeam()
+        event_team = cls()
 
-        if 'name' in dct:
-            event_team.name = dct['name']
-            del dct['name']
+        if "name" in dct:
+            event_team.name = dct.pop("name")
 
-        if 'isHome' in dct:
-            event_team.is_home = dct['isHome']
-            del dct['isHome']
+        if "isHome" in dct:
+            event_team.is_home = dct.pop("isHome")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for ProgramEventDetails: ' + key)
+            logging.warn("Key(s) not processed for EventTeam: %s", ", ".join(dct.keys()))
 
         return event_team
+
 
 class ProgramEventDetails(object):
     def __init__(self):
@@ -1277,47 +1336,109 @@ class ProgramEventDetails(object):
         self.teams = []
         """:type: list[EventTeam]"""
 
-    @staticmethod
-    def decode(dct):
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
+        :type dct: dict
         :return:
+        :rtype: ProgramEventDetails
         """
-        ped = ProgramEventDetails()
+        ped = cls()
 
-        if 'venue100' in dct:
-            ped.venue = dct['venue100']
-            del dct['venue100']
+        if "venue100" in dct:
+            ped.venue = dct.pop("venue100")
 
-        if 'gameDate' in dct:
-            ped.game_date = parser.parse(dct['gameDate'])
-            del dct['gameDate']
+        if "gameDate" in dct:
+            ped.game_date = parse_date(dct.pop("gameDate"))
 
-        if 'teams' in dct:
-            for team in dct['teams']:
-                ped.teams.append(EventTeam.decode(team))
-            del dct['teams']
+        if "teams" in dct:
+            for team in dct.pop("teams"):
+                ped.teams.append(EventTeam.from_dict(team))
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for ProgramEventDetails: ' + key)
+            logging.warn("Key(s) not processed for ProgramEventDetails: %s", ", ".join(dct.keys()))
 
         return ped
+
+
+class ProgramKeywords(object):
+    def __init__(self):
+        self.mood = None
+        """:type: list[unicode]"""
+
+        self.time_period = None
+        """:type: list[unicode]"""
+
+        self.character = None
+        """:type: list[unicode]"""
+
+        self.theme = None
+        """:type: list[unicode]"""
+
+        self.setting = None
+        """:type: list[unicode]"""
+
+        self.subject = None
+        """:type: list[unicode]"""
+
+        self.general = None
+        """:type: list[unicode]"""
+
+    @classmethod
+    def from_dict(cls, dct):
+        """
+
+        :param dct:
+        :type dct: dict
+        :return:
+        :rtype: ProgramKeywords
+        """
+        program_keywords = cls()
+
+        if "Mood" in dct:
+            program_keywords.mood = dct.pop("Mood")
+
+        if "Time Period" in dct:
+            program_keywords.time_period = dct.pop("Time Period")
+
+        if "Character" in dct:
+            program_keywords.character = dct.pop("Character")
+
+        if "Theme" in dct:
+            program_keywords.theme = dct.pop("Theme")
+
+        if "Setting" in dct:
+            program_keywords.setting = dct.pop("Setting")
+
+        if "Subject" in dct:
+            program_keywords.subject = dct.pop("Subject")
+
+        if "General" in dct:
+            program_keywords.general = dct.pop("General")
+
+        if len(dct) != 0:
+            logging.warn("Key(s) not processed for ProgramKeywords: %s", ", ".join(dct.keys()))
+
+        return program_keywords
 
 class Program(object):
     def __init__(self):
         self.program_id = None
         """:type: unicode"""
 
-        self.titles = ProgramTitles()
+        self.md5 = None
+        """:type: unicode"""
+
+        self.titles = None
         """:type: ProgramTitles"""
 
         self.event_details = None
         """:type: ProgramEventDetails"""
 
-        self.descriptions = ProgramDescriptions()
-        """:type: ProgramDescriptions"""
+        self.descriptions = None
+        """:type: ProgramDescriptionList"""
 
         self.original_air_date = None
         """:type: date"""
@@ -1328,7 +1449,7 @@ class Program(object):
         self.episode_title = None
         """:type: unicode"""
 
-        self.metadata = ProgramMetadata()
+        self.metadata = None
         """:type: ProgramMetadata"""
 
         self.cast = []
@@ -1340,14 +1461,11 @@ class Program(object):
         self.show_type = None
         """:type: unicode"""
 
-        self.has_image_artwork = None
+        self.has_image_artwork = False
         """:type: bool"""
 
-        self.md5 = None
-        """:type: unicode"""
-
         self.content_ratings = []
-        """:type: list[ProgramContentRatings]"""
+        """:type: list[ProgramContentRating]"""
 
         self.content_advisories = []
         """:type: list[unicode]"""
@@ -1371,7 +1489,7 @@ class Program(object):
         """:type: unicode"""
 
         self.keywords = None
-        """:type: unicode"""
+        """:type: ProgramKeywords"""
 
         self.official_url = None
         """:type: unicode"""
@@ -1379,17 +1497,39 @@ class Program(object):
         self.entity_type = None
         """:type: unicode"""
 
+        self.resource_id = None
+        """:type: unicode"""
+
+    @property
+    def artwork_id(self):
+        if not self.has_image_artwork:
+            return None
+        return self.program_id[0:10]
+
+    @property
+    def is_show_entity(self):
+        return self.entity_type == u"Show"
+
+    @property
+    def is_episode_entity(self):
+        return self.entity_type == u"Episode"
+
+    @property
+    def is_movie_entity(self):
+        return self.entity_type == u"Movie"
+
+    @property
+    def is_sports_entity(self):
+        return self.entity_type == u"Sports"
+
+    def __unicode__(self):
+        return u"{0.program_id} '{1.title120}'".format(self, self.titles)
+
     def __str__(self):
-        return u'{0} "{1}"'.format(self.program_id, self.titles.title120)
+        return unicode(self).encode("utf-8")
 
     def get_content_rating(self, body):
-        content_ratings = [content_rating for content_rating in self.content_ratings if content_rating.body == body]
-        if len(content_ratings) != 0:
-            return content_ratings[0].code
-        return None
-
-    def get_mpaa_content_rating(self):
-        return self.get_content_rating(u'Motion Picture Association of America')
+        return next((content_rating for content_rating in self.content_ratings if content_rating.body == body), None)
 
     def get_cast(self, in_roles):
         return [cast for cast in self.cast if cast.role in in_roles]
@@ -1398,7 +1538,7 @@ class Program(object):
         return [crew for crew in self.crew if crew.role in in_roles]
 
     @staticmethod
-    def decode(dct):
+    def from_dict(dct):
         """
 
         :param dct:
@@ -1406,111 +1546,216 @@ class Program(object):
         :return:
         :rtype: Program
         """
+        if "programID" not in dct or "md5" not in dct:
+            return dct
+
         program = Program()
 
-        if 'programID' in dct:
-            program.program_id = dct['programID']
-            if program.program_id[:2] == 'EP':
-                program.episode_num = int(program.program_id[-4:])
-            del dct['programID']
+        program.program_id = dct.pop("programID")
 
-        if 'titles' in dct:
-            program.titles = ProgramTitles.decode(dct['titles'])
-            del dct['titles']
+        if program.program_id[:2] == "EP":
+            program.episode_num = int(program.program_id[-4:])
 
-        if 'md5' in dct:
-            program.md5 = dct['md5']
-            del dct['md5']
+        program.titles = ProgramTitles.from_iterable(dct.pop("titles"))
 
-        if 'eventDetails' in dct:
-            program.event_details = ProgramEventDetails.decode(dct['eventDetails'])
-            del dct['eventDetails']
+        program.md5 = dct.pop("md5")
 
-        if 'descriptions' in dct:
-            program.descriptions = ProgramDescriptions.decode(dct['descriptions'])
-            del dct['descriptions']
+        if "eventDetails" in dct:
+            program.event_details = ProgramEventDetails.from_dict(dct.pop("eventDetails"))
 
-        if 'originalAirDate' in dct:
-            program.original_air_date = parse_date(dct['originalAirDate'])
-            del dct['originalAirDate']
+        if "descriptions" in dct:
+            program.descriptions = ProgramDescriptionList.from_dict(dct.pop("descriptions"))
 
-        if 'genres' in dct:
-            program.genres = dct['genres']
-            del dct['genres']
+        if "originalAirDate" in dct:
+            program.original_air_date = parse_date(dct.pop("originalAirDate"))
 
-        if 'episodeTitle150' in dct:
-            program.episode_title = dct['episodeTitle150']
-            del dct['episodeTitle150']
+        if "genres" in dct:
+            program.genres = dct.pop("genres")
 
-        if 'metadata' in dct:
-            program.metadata = ProgramMetadata.decode(dct['metadata'])
-            del dct['metadata']
+        if "episodeTitle150" in dct:
+            program.episode_title = dct.pop("episodeTitle150")
 
-        if 'cast' in dct:
-            for cast in dct['cast']:
-                program.cast.append(ProgramCast.decode(cast))
-            del dct['cast']
+        if "metadata" in dct:
+            program.metadata = ProgramMetadata.from_iterable(dct.pop("metadata"))
 
-        if 'crew' in dct:
-            for crew in dct['crew']:
-                program.cast.append(ProgramCast.decode(crew))
-            del dct['crew']
+        if "cast" in dct:
+            program.cast = ProgramCast.from_iterable(dct.pop("cast"))
 
-        if 'showType' in dct:
-            program.show_type = dct['showType']
-            del dct['showType']
+        if "crew" in dct:
+            program.crew = ProgramCrew.from_iterable(dct.pop("crew"))
 
-        if 'hasImageArtwork' in dct:
-            program.has_image_artwork = dct['hasImageArtwork']
-            del dct['hasImageArtwork']
+        if "showType" in dct:
+            program.show_type = dct.pop("showType")
 
-        if 'contentRating' in dct:
-            for content_rating in dct['contentRating']:
-                program.content_ratings.append(ProgramContentRating.decode(content_rating))
-            del dct['contentRating']
+        if "hasImageArtwork" in dct:
+            program.has_image_artwork = dct.pop("hasImageArtwork")
 
-        if 'contentAdvisory' in dct:
-            program.content_advisories = dct['contentAdvisory']
-            del dct['contentAdvisory']
+        if "contentRating" in dct:
+            program.content_ratings = ProgramContentRating.from_iterable(dct.pop("contentRating"))
 
-        if 'recommendations' in dct:
-            for recommendation in dct['recommendations']:
-                program.recommendations.append(ProgramRecommendation.decode(recommendation))
-            del dct['recommendations']
+        if "contentAdvisory" in dct:
+            program.content_advisories = dct.pop("contentAdvisory")
 
-        if 'movie' in dct:
-            program.movie = ProgramMovie.decode(dct['movie'])
-            del dct['movie']
+        if "recommendations" in dct:
+            program.recommendations = ProgramRecommendation.from_iterable(dct.pop("recommendations"))
 
-        if 'animation' in dct:
-            program.animation = dct['animation']
-            del dct['animation']
+        if "movie" in dct:
+            program.movie = ProgramMovie.from_dict(dct.pop("movie"))
 
-        if 'audience' in dct:
-            program.audience = dct['audience']
-            del dct['audience']
+        if "animation" in dct:
+            program.animation = dct.pop("animation")
 
-        if 'holiday' in dct:
-            program.holiday = dct['holiday']
-            del dct['holiday']
+        if "audience" in dct:
+            program.audience = dct.pop("audience")
 
-        if 'keyWords' in dct:
-            program.keywords = dct['keyWords']
-            del dct['keyWords']
+        if "holiday" in dct:
+            program.holiday = dct.pop("holiday")
 
-        if 'officialURL' in dct:
-            program.official_url = dct['officialURL']
-            del dct['officialURL']
+        if "keyWords" in dct:
+            program.keywords = ProgramKeywords.from_dict(dct.pop("keyWords"))
 
-        if 'entityType' in dct:
-            program.entity_type = dct['entityType']
-            del dct['entityType']
+        if "officialURL" in dct:
+            program.official_url = dct.pop("officialURL")
+
+        if "entityType" in dct:
+            program.entity_type = dct.pop("entityType")
+
+        if "resourceID" in dct:
+            program.resource_id = dct.pop("resourceID")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for Program: ' + key)
+            logging.warn("Key(s) not processed for Program: %s", ", ".join(dct.keys()))
 
         return program
+
+
+class ScheduleHashList(list):
+    def __init__(self, *args, **kwargs):
+        super(ScheduleHashList, self).__init__(*args, **kwargs)
+
+    def schedule_dates(self):
+        return sorted({schedule_hash.schedule_date for schedule_hash in self})
+
+    def get_station_id_set(self):
+        return {schedule_hash.station_id for schedule_hash in self}
+
+    def get_schedule_hashes(self):
+        return [(item.station_id, item.schedule_date, item.md5) for item in self]
+
+    @classmethod
+    def from_dict(cls, dct):
+        """
+
+        :param dct:
+        :type dct: dict
+        :return:
+        :rtype: ScheduleHashList
+        """
+        return cls([ScheduleHash.from_dict(dct[station_id][schedule_date], station_id, parse_date(schedule_date)) for station_id in dct for schedule_date in dct[station_id]])
+
+
+class ScheduleHash(object):
+    def __init__(self, station_id, schedule_date):
+        self.station_id = station_id
+        """:type: unicode"""
+
+        self.schedule_date = schedule_date
+        """:type: date"""
+
+        self.code = None
+        """:type: unicode"""
+
+        self.message = None
+        """:type: unicode"""
+
+        self.last_modified = None
+        """:type: datetime"""
+
+        self.md5 = None
+        """:type: unicode"""
+
+    def __unicode__(self):
+        return u"ScheduleHash for Station {0.station_id} on {0.schedule_date}".format(self)
+
+    def __str__(self):
+        return unicode(self).encode("utf-8")
+
+    @classmethod
+    def from_dict(cls, dct, station_id, schedule_date):
+        """
+
+        :param dct:
+        :type dct: dict
+        :param station_id:
+        :type station_id: unicode
+        :param schedule_date:
+        :type schedule_date: date
+        :return:
+        :rtype: ScheduleHash
+        """
+        schedule_hash = cls(station_id, schedule_date)
+
+        if "code" in dct:
+            schedule_hash.code = dct.pop("code")
+
+        if "message" in dct:
+            schedule_hash.message = dct.pop("message")
+
+        if "lastModified" in dct:
+            schedule_hash.last_modified = dct.pop("lastModified")
+
+        if "md5" in dct:
+            schedule_hash.md5 = dct.pop("md5")
+
+        if len(dct) != 0:
+            logging.warn("Key(s) not processed for ScheduleMetadata: %s", ", ".join(dct.keys()))
+
+        return schedule_hash
+
+
+class ScheduleList(list):
+    def __init__(self, *args, **kwargs):
+        super(ScheduleList, self).__init__(*args, **kwargs)
+
+    def schedule_dates(self):
+        return sorted({schedule.metadata.start_date for schedule in self})
+
+    def order_by(self, sort_func):
+        return (schedule for schedule in sorted(self, key=sort_func))
+
+    def order_by_start_date(self):
+        return self.order_by(lambda schedule: schedule.metadata.start_date)
+
+    def get_broadcasts(self):
+        for schedule in self:
+            for broadcast in schedule.broadcasts:
+                yield broadcast
+
+    def get_program_ids(self):
+        return unique(broadcast.program_id for schedule in self for broadcast in schedule.broadcasts)
+
+    def get_program_hash_list(self):
+        return list({(broadcast.program_id, broadcast.md5) for schedule in self for broadcast in schedule.broadcasts})
+
+    def get_program_max_schedule_dates(self):
+        return [(program_id, max_schedule_date) for program_id, max_schedule_date in {broadcast.program_id: schedule.metadata.start_date for schedule in self.order_by_start_date() for broadcast in schedule.broadcasts}.iteritems()]
+
+    def get_schedule(self, station_id, schedule_date):
+        """
+
+        :param station_id:
+        :type station_id: unicode
+        :param schedule_date:
+        :type schedule_date: date
+        :return:
+        :rtype: Schedule
+        """
+        return next((schedule for schedule in self if schedule.station_id == station_id and schedule.metadata.start_date == schedule_date), None)
+
+    @staticmethod
+    def from_iterable(iterable):
+        return ScheduleList([Schedule.from_dict(item) for item in iterable])
+
 
 class ScheduleMetadata(object):
     def __init__(self):
@@ -1523,8 +1768,10 @@ class ScheduleMetadata(object):
         self.start_date = None
         """:type: datetime"""
 
-    @staticmethod
-    def decode(dct):
+        self.code = None
+
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
@@ -1532,25 +1779,23 @@ class ScheduleMetadata(object):
         :return:
         :rtype: ScheduleMetadata
         """
-        schedule_metadata = ScheduleMetadata()
+        schedule_metadata = cls()
 
-        if 'modified' in dct:
-            schedule_metadata.modified = parse_datetime(dct['modified'])
-            del dct['modified']
+        schedule_metadata.modified = parse_datetime(dct.pop("modified"))
 
-        if 'md5' in dct:
-            schedule_metadata.md5 = dct['md5']
-            del dct['md5']
+        schedule_metadata.md5 = dct.pop("md5")
 
-        if 'startDate' in dct:
-            schedule_metadata.start_date = parse_date(dct['startDate'])
-            del dct['startDate']
+        schedule_metadata.start_date = parse_date(dct.pop("startDate"))
+
+        # optional
+        if "code" in dct:
+            schedule_metadata.code = dct.pop("code")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for ScheduleMetadata: ' + key)
+            logging.warn("Key(s) not processed for ScheduleMetadata: %s", ", ".join(dct.keys()))
 
         return schedule_metadata
+
 
 class Schedule(object):
     def __init__(self):
@@ -1560,23 +1805,23 @@ class Schedule(object):
         self.station_id = None
         """:type: unicode"""
 
-        self.station = None
-        """:type: Station"""
-
-        self.airings = []
-        """:type: list[Airing]"""
+        self.broadcasts = []
+        """:type: list[Broadcast]"""
 
         self.metadata = None
         """:type: ScheduleMetadata"""
 
-    def __str__(self):
-        return 'Schedule for {0}'.format(self.metadata.start_date)
+    def get_program_ids(self):
+        return list({broadcast.program_id for broadcast in self.broadcasts})
 
     def __unicode__(self):
-        return 'Schedule for {0}'.format(self.metadata.start_date)
+        return u"{1.start_date} Schedule for Station {0.station_id}".format(self, self.metadata)
+
+    def __str__(self):
+        return unicode(self).encode("utf-8")
 
     @staticmethod
-    def decode(dct):
+    def from_dict(dct):
         """
 
         :param dct:
@@ -1584,32 +1829,26 @@ class Schedule(object):
         :return:
         :rtype: Schedule
         """
+        if "stationID" not in dct:
+            return dct
+
         schedule = Schedule()
 
-        schedule.response_status = ResponseStatus.decode(dct)
+        schedule.response_status = ResponseStatus.from_dict(dct)
 
-        if 'stationID' in dct:
-            schedule.station_id = dct['stationID']
-            del dct['stationID']
+        schedule.station_id = dct.pop("stationID")
 
-        if 'programs' in dct:
-            for program in dct['programs']:
-                airing = Airing.decode(program)
-                airing.schedule = schedule
-                schedule.airings.append(airing)
-            del dct['programs']
+        schedule.broadcasts = Broadcast.from_iterable(dct.pop("programs"))
 
-        if 'metadata' in dct:
-            schedule.metadata = ScheduleMetadata.decode(dct['metadata'])
-            del dct['metadata']
+        schedule.metadata = ScheduleMetadata.from_dict(dct.pop("metadata"))
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for Schedule: ' + key)
+            logging.warn("Key(s) not processed for Schedule: %s", ", ".join(dct.keys()))
 
         return schedule
 
-class MultipartAiring(object):
+
+class MultipartBroadcast(object):
     def __init__(self):
         self.part_number = None
         """:type: int"""
@@ -1617,36 +1856,29 @@ class MultipartAiring(object):
         self.total_parts = None
         """:type: int"""
 
-    @staticmethod
-    def decode(dct):
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
         :type dct: dict
         :return:
-        :rtype: MultipartAiring
+        :rtype: MultipartBroadcast
         """
-        multipart_airing = MultipartAiring()
+        multipart_broadcast = cls()
 
-        if 'partNumber' in dct:
-            multipart_airing.part_number = dct['partNumber']
-            del dct['partNumber']
+        multipart_broadcast.part_number = dct.pop("partNumber")
 
-        if 'totalParts' in dct:
-            multipart_airing.total_parts = dct['totalParts']
-            del dct['totalParts']
+        multipart_broadcast.total_parts = dct.pop("totalParts")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for MultipartAiring: ' + key)
+            logging.warn("Key(s) not processed for MultipartBroadcast: %s", ", ".join(dct.keys()))
 
-        return multipart_airing
+        return multipart_broadcast
 
-class Airing(object):
+
+class Broadcast(object):
     def __init__(self):
-        self.schedule = None
-        """:type: Schedule"""
-
         self.program_id = None
         """:type: unicode"""
 
@@ -1659,19 +1891,9 @@ class Airing(object):
         self.duration = None
         """:type: int"""
 
-        self.end_date_time = None
-        """:type: datetime"""
-
         # is this showing Live, or Tape Delayed?. Possible values: "Live", "Tape", "Delay".
         self.live_tape_delay = None
-        self.is_live = None
-        """:type: bool"""
-
-        self.is_tape = None
-        """:type: bool"""
-
-        self.is_delay = None
-        """:type: bool"""
+        """:type: unicode"""
 
         # Values are: "Season Premiere", "Season Finale", "Series Premiere", "Series Finale"
         self.is_premiere_or_finale = None
@@ -1683,9 +1905,11 @@ class Airing(object):
 
         self.is_cable_in_the_classroom = False
         """:type: bool"""
+
         # typically only found outside of North America
         self.is_catchup = False
         """:type: bool"""
+
         # typically only found outside of North America
         self.is_continued = False
         """:type: bool"""
@@ -1698,15 +1922,19 @@ class Airing(object):
 
         self.is_left_in_progress = False
         """:type: bool"""
+
         # Should only be found in Miniseries and Movie program types.
         self.is_premiere = False
         """:type: bool"""
+
         # Program stops and will restart later (frequently followed by a continued). Typically only found outside of North America.
         self.is_program_break = False
         """:type: bool"""
+
         # An encore presentation. Repeat should only be found on a second telecast of sporting events.
         self.is_repeat = False
         """:type: bool"""
+
         # Program has an on-screen person providing sign-language translation.
         self.is_signed = False
         """:type: bool"""
@@ -1718,141 +1946,321 @@ class Airing(object):
         """:type: bool"""
 
         self.audio_properties = []
+        """:type: list[unicode]"""
+
         self.video_properties = []
+        """:type: list[unicode]"""
+
         self.syndication = None
 
         self.multipart = None
-        """:type: MultipartAiring"""
+        """:type: MultipartBroadcast"""
 
         self.ratings = []
 
         self.parental_advisory = False
+        """:type: bool"""
 
-    @staticmethod
-    def decode(dct):
+    @property
+    def is_live(self):
+        """:rtype: bool"""
+        if self.live_tape_delay is None:
+            return None
+        return self.live_tape_delay == u"Live"
+
+    @property
+    def is_tape(self):
+        """:rtype: bool"""
+        if self.live_tape_delay is None:
+            return None
+        return self.live_tape_delay == u"Tape"
+
+    @property
+    def is_delay(self):
+        """:rtype: bool"""
+        if self.live_tape_delay is None:
+            return None
+        return self.live_tape_delay == u"Delay"
+
+    @property
+    def end_date_time(self):
+        """:rtype: datetime"""
+        return self.air_date_time + timedelta(seconds=self.duration)
+
+    def __unicode__(self):
+        return u"Broadcast of {0.program_id} at {0.air_date_time}".format(self)
+
+    def __str__(self):
+        return unicode(self).encode("utf-8")
+
+    @classmethod
+    def from_iterable(cls, iterable):
+        """
+
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
+        :return:
+        :rtype: list[Broadcast]
+        """
+        return [cls.from_dict(broadcast) for broadcast in iterable]
+
+    @classmethod
+    def from_dict(cls, dct):
         """
 
         :param dct:
         :type dct: dict
         :return:
-        :rtype: Airing
+        :rtype: Broadcast
         """
-        airing = Airing()
+        broadcast = cls()
 
-        if 'programID' in dct:
-            airing.program_id = dct['programID']
-            del dct['programID']
+        broadcast.program_id = dct.pop("programID")
 
-        if 'md5' in dct:
-            airing.md5 = dct['md5']
-            del dct['md5']
+        broadcast.md5 = dct.pop("md5")
 
-        if 'airDateTime' in dct:
-            airing.air_date_time = parse_datetime(dct['airDateTime'])
-            del dct['airDateTime']
+        broadcast.air_date_time = parse_datetime(dct.pop("airDateTime"))
 
-        if 'duration' in dct:
-            airing.duration = dct['duration']
-            del dct['duration']
+        broadcast.duration = dct.pop("duration")
 
-        if airing.air_date_time is not None and airing.duration is not None:
-            airing.end_date_time = airing.air_date_time + timedelta(seconds=airing.duration)
+        if "liveTapeDelay" in dct:
+            broadcast.live_tape_delay = dct.pop("liveTapeDelay")
 
-        if 'liveTapeDelay' in dct:
-            airing.live_tape_delay = dct['liveTapeDelay']
-            airing.is_live = airing.live_tape_delay == "Live"
-            airing.is_tape = airing.live_tape_delay == "Tape"
-            airing.is_delay = airing.live_tape_delay == "Delay"
-            del dct['liveTapeDelay']
+        if "isPremiereOrFinale" in dct:
+            broadcast.is_premiere_or_finale = dct.pop("isPremiereOrFinale")
 
-        if 'isPremiereOrFinale' in dct:
-            airing.is_premiere_or_finale = dct['isPremiereOrFinale']
-            del dct['isPremiereOrFinale']
+        if "new" in dct:
+            broadcast.is_new = dct.pop("new")
 
-        if 'new' in dct:
-            airing.is_new = dct['new']
-            del dct['new']
+        if "cableInTheClassroom" in dct:
+            broadcast.is_cable_in_the_classroom = dct.pop("cableInTheClassroom")
 
-        if 'cableInTheClassroom' in dct:
-            airing.is_cable_in_the_classroom = dct['cableInTheClassroom']
-            del dct['cableInTheClassroom']
+        if "catchup" in dct:
+            broadcast.is_catchup = dct.pop("catchup")
 
-        if 'catchup' in dct:
-            airing.is_catchup = dct['catchup']
-            del dct['catchup']
+        if "continued" in dct:
+            broadcast.is_continued = dct.pop("continued")
 
-        if 'continued' in dct:
-            airing.is_continued = dct['continued']
-            del dct['continued']
+        if "educational" in dct:
+            broadcast.is_educational = dct.pop("educational")
 
-        if 'educational' in dct:
-            airing.is_educational = dct['educational']
-            del dct['educational']
+        if "joinedInProgress" in dct:
+            broadcast.is_joined_in_progress = dct.pop("joinedInProgress")
 
-        if 'joinedInProgress' in dct:
-            airing.is_joined_in_progress = dct['joinedInProgress']
-            del dct['joinedInProgress']
+        if "leftInProgress" in dct:
+            broadcast.is_left_in_progress = dct.pop("leftInProgress")
 
-        if 'leftInProgress' in dct:
-            airing.is_left_in_progress = dct['leftInProgress']
-            del dct['leftInProgress']
+        if "premiere" in dct:
+            broadcast.is_premiere = dct.pop("premiere")
 
-        if 'premiere' in dct:
-            airing.is_premiere = dct['premiere']
-            del dct['premiere']
+        if "programBreak" in dct:
+            broadcast.is_program_break = dct.pop("programBreak")
 
-        if 'programBreak' in dct:
-            airing.is_program_break = dct['programBreak']
-            del dct['programBreak']
+        if "repeat" in dct:
+            broadcast.is_repeat = dct.pop("repeat")
 
-        if 'repeat' in dct:
-            airing.is_repeat = dct['repeat']
-            del dct['repeat']
+        if "signed" in dct:
+            broadcast.is_signed = dct.pop("signed")
 
-        if 'signed' in dct:
-            airing.is_signed = dct['signed']
-            del dct['signed']
+        if "subjectToBlackout" in dct:
+            broadcast.is_subject_to_blackout = dct.pop("subjectToBlackout")
 
-        if 'subjectToBlackout' in dct:
-            airing.is_subject_to_blackout = dct['subjectToBlackout']
-            del dct['subjectToBlackout']
+        if "timeApproximate" in dct:
+            broadcast.is_time_approximate = dct.pop("timeApproximate")
 
-        if 'timeApproximate' in dct:
-            airing.is_time_approximate = dct['timeApproximate']
-            del dct['timeApproximate']
+        if "audioProperties" in dct:
+            broadcast.audio_properties = dct.pop("audioProperties")
 
-        if 'audioProperties' in dct:
-            airing.audio_properties = dct['audioProperties']
-            del dct['audioProperties']
+        if "videoProperties" in dct:
+            broadcast.video_properties = dct.pop("videoProperties")
 
-        if 'videoProperties' in dct:
-            airing.video_properties = dct['videoProperties']
-            del dct['videoProperties']
+        if "syndication" in dct:
+            broadcast.syndication = dct.pop("syndication")
 
-        if 'syndication' in dct:
-            airing.syndication = dct['syndication']
-            del dct['syndication']
+        if "multipart" in dct:
+            broadcast.multipart = MultipartBroadcast.from_dict(dct.pop("multipart"))
 
-        if 'multipart' in dct:
-            airing.multipart = MultipartAiring.decode(dct['multipart'])
-            del dct['multipart']
+        if "ratings" in dct:
+            broadcast.ratings = dct.pop("ratings")
 
-        if 'ratings' in dct:
-            airing.ratings = dct['ratings']
-            del dct['ratings']
-
-        if 'parentalAdvisory' in dct:
-            airing.parental_advisory = dct['parentalAdvisory']
-            del dct['parentalAdvisory']
+        if "parentalAdvisory" in dct:
+            broadcast.parental_advisory = dct.pop("parentalAdvisory")
 
         if len(dct) != 0:
-            for key in dct.keys():
-                logging.warn('Key not processed for Airing: ' + key)
+            logging.warn("Key(s) not processed for Broadcast: %s", ", ".join(dct.keys()))
 
-        return airing
+        return broadcast
 
-def parse_datetime(datetime_str):
-    return datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%SZ")
 
-def parse_date(date_str):
-    return datetime.strptime(date_str, "%Y-%m-%d").date()
+class Artwork(object):
+    def __init__(self):
+        self.width = None
+        """:type: int"""
+
+        self.height = None
+        """:type: int"""
+
+        self.caption = None
+        """:type: dict"""
+
+        self.uri = None
+        """:type: unicode"""
+
+        self.size = None
+        """:type: unicode"""
+
+        self.aspect = None
+        """:type: unicode"""
+
+        self.category = None
+        """:type: unicode"""
+
+        self.text = None
+        """:type: bool"""
+
+        self.primary = None
+        """:type: bool"""
+
+        self.tier = None
+        """:type: unicode"""
+
+    @property
+    def url(self):
+        if self.uri[0:7] == u"assets/":
+            return u"https://json.schedulesdirect.org/20141201/image/" + self.uri
+
+        return self.uri
+
+    def __unicode__(self):
+        return u"{0.tier} {0.category} {0.size} {0.width}x{0.height} ({0.aspect}) {0.url}".format(self)
+
+    def __str__(self):
+        return unicode(self).encode("utf-8")
+
+    @classmethod
+    def from_dict(cls, dct):
+        """
+
+        :param dct:
+        :type dct: dict
+        :return:
+        :rtype: Artwork
+        """
+        artwork = cls()
+
+        if "width" in dct:
+            artwork.width = int(dct.pop("width"))
+
+        if "height" in dct:
+            artwork.height = int(dct.pop("height"))
+
+        if "caption" in dct:
+            artwork.caption = dct.pop("caption")
+
+        if "uri" in dct:
+            artwork.uri = dct.pop("uri")
+
+        if "size" in dct:
+            artwork.size = dct.pop("size")
+
+        if "aspect" in dct:
+            artwork.aspect = dct.pop("aspect")
+
+        if "category" in dct:
+            artwork.category = dct.pop("category")
+
+        if "text" in dct:
+            artwork.text = (dct.pop("text") == "yes")
+
+        if "primary" in dct:
+            artwork.primary = (dct.pop("primary") == "true")
+
+        if "tier" in dct:
+            artwork.tier = dct.pop("tier")
+
+        if len(dct) != 0:
+            logging.warn("Key(s) not processed for Artwork: %s", ", ".join(dct.keys()))
+
+        return artwork
+
+    @classmethod
+    def from_iterable(cls, iterable):
+        """
+
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
+        :return:
+        :rtype: list[Artwork]
+        """
+        return [Artwork.from_dict(item) for item in iterable]
+
+
+class ArtworkAlbum(list):
+    def __init__(self, *args, **kwargs):
+        super(ArtworkAlbum, self).__init__(*args, **kwargs)
+
+    def aspect_preference(self, *aspects):
+        return ArtworkAlbum(artwork for aspect in aspects for artwork in self if artwork.aspect == aspect)
+
+    def category_preference(self, *categories):
+        return ArtworkAlbum(artwork for category in categories for artwork in self if artwork.category == category)
+
+    def size_preference(self, *sizes):
+        return ArtworkAlbum(artwork for size in sizes for artwork in self if artwork.size == size)
+
+    def tier_preference(self, *tiers):
+        return ArtworkAlbum(artwork for tier in tiers for artwork in self if (tier is None and artwork.tier is None) or artwork.tier == tier)
+
+    @classmethod
+    def from_iterable(cls, iterable):
+        """
+
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
+        :return:
+        :rtype: ArtworkAlbum
+        """
+        return cls(Artwork.from_iterable(iterable))
+
+
+class ProgramArtwork(object):
+    def __init__(self):
+        self.artwork_id = None
+        """:type: unicode"""
+
+        self.artwork_album = ArtworkAlbum()
+        """:type: ArtworkAlbum"""
+
+    @staticmethod
+    def from_dict(dct):
+        """
+
+        :param dct:
+        :type dct: dict
+        :return:
+        :rtype: ProgramArtwork
+        """
+        if "programID" not in dct:
+            return dct
+
+        program_artwork = ProgramArtwork()
+
+        program_artwork.artwork_id = dct.pop("programID")
+
+        program_artwork.artwork_album = ArtworkAlbum.from_iterable(dct.pop("data"))
+
+        if len(dct) != 0:
+            logging.warn("Key(s) not processed for ProgramArtwork: %s", ", ".join(dct.keys()))
+
+        return program_artwork
+
+    @classmethod
+    def from_iterable(cls, iterable):
+        """
+
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
+        :return:
+        :rtype: ProgramArtwork
+        """
+        return [ProgramArtwork.from_dict(item) for item in iterable]

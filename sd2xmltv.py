@@ -1,508 +1,1 @@
-#!/usr/bin/python
-# coding=utf-8
-
-import logging
-from xmltv.common import XmltvDocument, XmltvChannel, XmltvProgramme
-from libschedulesdirect.common import Status, Program, Airing, Channel
-from libschedulesdirect.schedulesdirect import SchedulesDirect
-from optparse import OptionParser
-from datetime import datetime, timedelta
-import gzip
-
-class Sd2Xmltv:
-
-    def __init__(self, options):
-        self._sd = SchedulesDirect(options.username, options.password)
-        self._status = None
-
-        self._logger = logging.getLogger(__name__)
-        self._xmltv_document = XmltvDocument()
-        self._output_path = options.output_path
-        self._days = options.days
-
-        self._callsign_whitelist = None
-        self._callsign_blacklist = None
-
-        self._content_rating_preference_order = [u'Motion Picture Association of America', u'USA Parental Rating', u'Canadian Parental Rating']
-
-        self._include_credits = False
-        self._include_see_also = False
-
-        self._genres = set()
-
-    def login(self):
-        self._logger.info('Getting SchedulesDirect token.')
-        self._sd.get_token()
-
-        self._logger.info('Getting SchedulesDirect status.')
-        self._status = Status.decode(self._sd.get_status())
-
-        if not self._sd.is_online():
-            raise Exception('System is not online.')
-
-        expiry_delta = self._status.account.expires - datetime.utcnow()
-        self._logger.info('Account will expire on {0} ({1} days).'.format(self._status.account.expires, int(expiry_delta.total_seconds() // 86400)))
-
-        time_delta = datetime.utcnow() - self._status.last_data_update
-        hours, minutes = int(time_delta.total_seconds() // 3600), int((time_delta.total_seconds() % 3600) // 60)
-        self._logger.info('SchedulesDirect last update at {0} ({1} hours {2} minutes ago).'.format(self._status.last_data_update, hours, minutes))
-
-        if self._status.system_status.message is not None:
-            self._logger.info('Message: {0}'.format(self._status.system_status.message))
-
-    def process(self):
-
-        if len(self._status.lineups) == 0:
-            self._logger.info('Not subscribed to any lineups, exiting.')
-            return
-
-        self._logger.info('Getting station/channel mappings for {0} lineups.'.format(len(self._status.lineups)))
-        lineup_mappings = self._sd.get_lineup_mappings([(lineup.lineup_id, lineup.modified) for lineup in self._status.lineups])
-
-        #self._callsign_whitelist = ['CBLTDT', 'CHCHDT', 'CKCODT', 'CICADT', 'CHCJDT', 'CJMTDT', 'CIIID41', 'CFMTDT', 'CITYDT']
-
-        station_ids = {channel.station.station_id for channel in self._enumerate_channels(lineup_mappings)}
-
-        current_date = datetime.utcnow().date()
-
-        schedule_dates = [(current_date + timedelta(days = x)).strftime('%Y-%m-%d') for x in range(0, self._days)]
-
-        self._logger.info('Getting schedules for {0} stations.'.format(len(station_ids)))
-        schedules = self._sd.get_schedules(station_ids, schedule_dates)
-
-        for channel in self._enumerate_channels(lineup_mappings):
-            channel.station.schedules = [schedule for schedule in schedules if channel.station.station_id == schedule.station_id]
-
-        self._logger.info('Caching new or changed programs...')
-        programs = [(airing.program_id, airing.md5) for airing in self._enumerate_airings(lineup_mappings)]
-        self._sd.cache_programs(programs)
-
-        self._logger.info('Adding channels to xmltv document...')
-        for channel in self._enumerate_channels(lineup_mappings):
-            self._add_channel(channel)
-
-        self._logger.info('Adding programs to xmltv document...')
-        total_programs_added = 0
-        for channel in self._enumerate_channels(lineup_mappings):
-            programs_added = 0
-            for schedule in channel.station.schedules:
-                # check for error statuses from SD - for example 7020 SCHEDULE RANGE EXCEEDED
-                # TODO: better handling of error responses
-                if schedule.response_status is not None and schedule.response_status.code != 0:
-                    self._logger.warn('Skipping day due to: ' + schedule.response_status.message)
-                    continue
-
-                self._logger.info('Adding programs on %s for channel %s.' %
-                                  (schedule.metadata.start_date.strftime("%Y-%m-%d"),
-                                  channel.get_display_names().next()))
-                for airing in schedule.airings:
-                    programs_added += 1
-                    self._add_programme(channel, airing)
-            self._logger.info('Added %s programs for channel %s.' %
-                              (programs_added, channel.get_display_names().next()))
-            total_programs_added += programs_added
-        self._logger.info('Added %s total programs.' % total_programs_added)
-
-        self._logger.info('Saving ' + self._output_path)
-
-        if self._output_path[-2:] == 'gz':
-            f = gzip.open(self._output_path, 'wb')
-            self._xmltv_document.save(f)
-            f.close()
-        else:
-            self._xmltv_document.save(self._output_path)
-
-        return
-
-    def manage(self):
-        while True:
-            print('\nManage Account Options:\n')
-            print('1. List subscribed lineups')
-            print('2. Add lineup')
-            print('3. Remove lineup')
-            print('4. List lineup channels.')
-            print('\nChoose an option or \'x\' to exit.')
-            choice = raw_input('> ')
-            if choice == 'x':
-                break
-            elif choice == '1':
-                self._list_subscribed_lineups()
-            elif choice == '2':
-                self._add_lineup()
-            elif choice == '3':
-                self._remove_lineup()
-            elif choice == '4':
-                self._list_lineup_channels()
-
-    def _list_subscribed_lineups(self):
-        lineups = self._sd.get_subscribed_lineups()
-        print '\nSubscribed Lineups:\n'
-        for lineup in lineups:
-            print 'Lineup:\t%s' % lineup.lineup_id
-            print 'Name:\t%s' % lineup.name
-            print 'Transport:\t%s' % lineup.transport
-            print 'Location:\t%s' % lineup.location
-            print ''
-
-    def _add_lineup(self):
-        while True:
-            print '\nAdd Lineup\n'
-            print 'Enter 5-digit zip or postal code or \'x\' to cancel:'
-            postal_code = raw_input('> ')
-            if postal_code == 'x':
-                break
-
-            # TODO: Handle more than just USA and CAN
-            country = 'USA'
-            if postal_code[0].isalpha():
-                country = 'CAN'
-
-            headends = self._sd.get_headends_by_postal_code(country, postal_code)
-
-            while True:
-                subscribed_lineups = self._sd.get_subscribed_lineups()
-                subscribed_lineup_ids = [lineup.lineup_id for lineup in subscribed_lineups]
-
-                headend_lineups = [(headend, lineup) for headend in headends for lineup in headend.lineups if lineup.lineup_id not in subscribed_lineup_ids]
-
-                transport_set = set()
-
-                for (headend, lineup) in headend_lineups:
-                    transport_set.add(headend.type)
-
-                options = []
-                count = 0
-                for transport in transport_set:
-                    print '\nTransport: %s\n' % transport
-                    for (headend, lineup) in [(headend, lineup) for (headend, lineup) in headend_lineups if headend.type == transport]:
-                        options.append((headend, lineup))
-                        count += 1
-                        print '\t%s. %s (%s)' % (count, lineup.name, headend.location)
-
-                print '\nChoose a lineup to add or \'x\' to cancel.'
-                choice = raw_input('> ')
-
-                if choice == 'x':
-                    break
-
-                choice = int(choice) - 1
-                (headend, lineup) = options[choice]
-
-                print 'Are you sure you want to add \'%s (%s)\'? (y/n)' % (lineup.name, headend.location)
-                if raw_input('> ') != 'y':
-                    continue
-
-                response = self._sd.add_lineup(lineup.lineup_id)
-
-                print 'Schedules Direct returned \'%s\'.' % response.response_status.message
-                print '%s lineup changes remaining.\n' % response.changes_remaining
-
-    def _list_lineup_channels(self):
-
-        while True:
-            print '\nList Lineup Channels\n'
-
-            subscribed_lineups = self._sd.get_subscribed_lineups()
-
-            options = []
-            count = 0
-            for lineup in subscribed_lineups:
-                count += 1
-                options.append(lineup)
-                print '%s. %s (%s)' % (count, lineup.name, lineup.location)
-
-            print '\nChoose a lineup to list channels or \'x\' to cancel.'
-            choice = raw_input('> ')
-            if choice == 'x':
-                break
-
-            choice = int(choice) - 1
-            lineup = options[choice]
-
-            lineup_mapping = self._sd.get_lineup_mapping(lineup.lineup_id)
-
-            for channel in lineup_mapping.channels:
-                print '%s\t%s.%s\t%s\t%s "%s"' % (channel.uhf_vhf, channel.atsc_major, channel.atsc_minor, channel.channel, channel.station.callsign, channel.station.name)
-
-    def _remove_lineup(self):
-
-        while True:
-            print '\nRemove Lineup\n'
-
-            subscribed_lineups = self._sd.get_subscribed_lineups()
-
-            options = []
-            count = 0
-            for lineup in subscribed_lineups:
-                count += 1
-                options.append(lineup)
-                print '%s. %s (%s)' % (count, lineup.name, lineup.location)
-
-            print '\nChoose a lineup to remove or \'x\' to cancel.'
-            choice = raw_input('> ')
-            if choice == 'x':
-                break
-
-            choice = int(choice) - 1
-            lineup = options[choice]
-
-            print 'Are you sure you want to remove \'%s (%s)\'? (y/n)' % (lineup.name, lineup.location)
-            if raw_input('> ') != 'y':
-                continue
-
-            response = self._sd.remove_lineup(lineup.lineup_id)
-
-            print '\nSchedules Direct returned \'%s\'.' % response.response_status.message
-            print '%s lineup changes remaining.\n' % response.changes_remaining
-
-    def _enumerate_channels(self, lineups):
-        result = [channel for lineup in lineups for channel in lineup.channels]
-
-        if self._callsign_whitelist is not None:
-            result = [channel for channel in result if channel.station.callsign in self._callsign_whitelist]
-
-        if self._callsign_blacklist is not None:
-            result = [channel for channel in result if channel.station.callsign not in self._callsign_blacklist]
-
-        yielded_channels = set()
-
-        for channel in result:
-            unique_id = channel.get_unique_id()
-            if unique_id in yielded_channels:
-                continue
-            yield channel
-            yielded_channels.add(unique_id)
-
-    def _enumerate_airings(self, lineups):
-        for channel in self._enumerate_channels(lineups):
-            for schedule in channel.station.schedules:
-                for airing in schedule.airings:
-                    yield airing
-
-    def _add_program_categories(self, programme, channel, airing, program):
-        """
-
-        :param programme:
-        :type programme: XmltvProgramme
-        :param channel:
-        :type channel: Channel
-        :param airing:
-        :type airing: Airing
-        :param program:
-        :type program: Program
-        :return:
-        """
-        categories = set()
-
-        if program.program_id[:2] == 'SP':
-            categories.add('Sports')
-
-        elif program.program_id[:2] == 'MV':
-            categories.add('Movie / Drama')
-
-        elif program.program_id[:2] == 'SH' or program.program_id[:2] == 'EP':
-            if 'Children' in program.genres:
-                categories.add("Children's / Youth programmes")
-
-            if 'Educational' in program.genres:
-                categories.add('Education / Science / Factual topics')
-
-            if 'Science' in program.genres:
-                categories.add('Education / Science / Factual topics')
-
-            if 'Newsmagazine' in program.genres:
-                categories.add('News magazine')
-
-            if 'Documentary' in program.genres:
-                categories.add('Documentary')
-
-            if 'News' in program.genres:
-                categories.add('News / Current affairs')
-
-            if 'Music' in program.genres:
-                categories.add('Music / Ballet / Dance')
-
-        for category in categories:
-            programme.add_category(category)
-
-    def _add_programme(self, channel, airing):
-        """
-
-        :param channel:
-        :type channel: Channel
-        :param airing:
-        :type airing: Airing
-        :return:
-        """
-
-        program = self._sd.get_program(airing.program_id, airing.md5)
-
-        if program is None:
-            self._logger.warning('Program id {0} with md5 {1} was not found in cache, trying again with only id.'.format(airing.program_id, airing.md5))
-            program = self._sd.get_program(airing.program_id)
-            if program is None:
-                self._logger.error('Program id {0} not found in cache, skipping adding program.'.format(airing.program_id))
-                return
-            self._logger.warning('Found Program id {0} \'{1}\' with md5 {2} in cache.'.format(program.program_id, program.titles.title120, program.md5))
-
-        start_time = airing.air_date_time
-        stop_time = airing.end_date_time
-        channel_id = channel.get_unique_id()
-
-        p = self._xmltv_document.add_programme(start_time, stop_time, channel_id)
-
-        p.add_title(program.titles.title120)
-
-        if program.episode_title is not None:
-            p.add_subtitle(program.episode_title)
-
-        self._add_program_categories(p, channel, airing, program)
-
-        #for genre in program.genres:
-        #    p.add_category('sd: ' + genre)
-
-        # was airing.is_new
-        #if program.program_id[:2] == 'EP' or program.program_id[:2] == 'MV' or program.program_id[:2] == 'SP':
-        # tvheadend now supports series subscription filtering so add to all shows
-        p.add_episode_num_dd_progid(program.program_id)
-
-        if program.metadata.season_episode is not None:
-            if airing.multipart is None:
-                p.add_episode_num_xmltv_ns(
-                    season_num = program.metadata.season_episode.season,
-                    episode_num = program.metadata.season_episode.episode)
-            else:
-                p.add_episode_num_xmltv_ns(
-                    season_num = program.metadata.season_episode.season,
-                    episode_num = program.metadata.season_episode.episode,
-                    part_num = airing.multipart.part_number,
-                    total_parts = airing.multipart.total_parts)
-        elif program.episode_num is not None:
-            p.add_episode_num_onscreen('E' + str(program.episode_num))
-
-        description_prefix = ''
-        if program.episode_title is not None:
-            description_prefix = '"' + program.episode_title + '" '
-
-        program_attributes = []
-
-        if program.show_type is not None:
-            program_attributes.append(program.show_type)
-
-        if program.movie is not None and program.movie.year is not None:
-            program_attributes.append(program.movie.year)
-        elif airing.is_live == True:
-            program_attributes.append('Live')
-        elif airing.is_new == True:
-            program_attributes.append('New')
-        elif program.original_air_date is not None:
-            program_attributes.append(program.original_air_date.strftime('%Y-%m-%d'))
-
-        if program.metadata.season_episode is not None:
-            program_attributes.append('S%sE%s' % (program.metadata.season_episode.season, program.metadata.season_episode.episode))
-        elif program.episode_num is not None:
-            program_attributes.append('E' + str(program.episode_num))
-
-        if airing.multipart is not None:
-            program_attributes.append('%s of %s' % (airing.multipart.part_number, airing.multipart.total_parts))
-
-        if len(program.content_ratings) != 0 and len(self._content_rating_preference_order) != 0:
-            for preference in self._content_rating_preference_order:
-                rating = program.get_content_rating(preference)
-                if rating is None:
-                    continue
-                program_attributes.append(rating)
-                break
-
-        if len(program_attributes) != 0:
-            description_prefix = description_prefix + '(' + '; '.join(program_attributes) + ') '
-
-        see_also = ''
-        if len(program.recommendations) != 0:
-            see_also = ' See also: ' + ', '.join([pr.title120 for pr in program.recommendations])
-
-        if len(program.descriptions.description1000) != 0:
-            for description in program.descriptions.description1000:
-                p.add_description(description_prefix + description.description + see_also, description.language)
-        elif len(program.descriptions.description100) != 0:
-            for description in program.descriptions.description100:
-                p.add_description(description_prefix + description.description + see_also, description.language)
-        else:
-            if description_prefix != '':
-                p.add_description(description_prefix.strip() + see_also)
-
-        if program.movie is not None:
-            for quality_rating in program.movie.quality_ratings:
-                p.add_star_rating(quality_rating.rating, quality_rating.max_rating, quality_rating.ratings_body)
-
-        if self._include_credits == False:
-            return
-
-        for cast in program.cast:
-            if cast['role'] in ['Actor', 'Guest', 'Guest Star', 'Judge', 'Voice', 'Guest Voice', 'Host', 'Narrator', 'Anchor', 'Contestant', 'Correspondent', 'Musical Guest']:
-                continue
-            self._logger.info('cast: ' + cast['role'])
-        actors = program.get_cast(['Actor'])
-        guests = program.get_cast(['Guest'])
-        guest_stars = program.get_cast(['Guest Star'])
-        judges = program.get_cast(['Judge'])
-        voices = program.get_cast(['Voice'])
-        guest_voices = program.get_cast(['Guest Voice'])
-        cast_hosts = program.get_cast(['Host'])
-        narrators = program.get_cast(['Narrator'])
-        anchors = program.get_cast(['Anchor'])
-        contestants = program.get_cast(['Contestant'])
-        correspondents = program.get_cast(['Correspondent'])
-        musical_guests = program.get_cast(['Musical Guest'])
-
-        for actor in actors:
-            p.add_credit_actor(actor.name)
-
-        for guest_star in guest_stars:
-            p.add_credit_guest(guest_star)
-
-        directors = program.get_crew(['Director'])
-        writers = program.get_crew(['Writer'])
-        producers = program.get_crew(['Producer'])
-
-        for director in directors:
-            p.add_credit_director(director)
-
-        for writer in writers:
-            p.add_credit_writer(writer)
-
-        for producer in producers:
-            p.add_credit_producer(producer)
-
-    def _add_channel(self, channel):
-        channel_id = channel.get_unique_id()
-
-        if self._xmltv_document.has_channel(channel_id):
-            self._logger.info('Skipping channel %s, already added.' % (channel_id))
-            return
-
-        self._logger.info('Adding channel %s to xmltv document.' % (channel_id))
-        xmltv_channel = self._xmltv_document.add_channel(channel_id)
-        [xmltv_channel.add_display_name(display_name) for display_name in channel.get_display_names()]
-
-def main():
-    parser = OptionParser()
-    parser.add_option('-u', '--username', dest='username', help='SchedulesDirect.org username.')
-    parser.add_option('-p', '--password', dest='password', help='SchedulesDirect.org password.')
-    parser.add_option('-o', '--output', dest='output_path', default='./xmltv.xml', help='Output path and filename (use .gz to compress).')
-    parser.add_option('-d', '--days', dest='days', type='int', default=14, help='Number of days to import')
-    parser.add_option('-m', '--manage', dest='manage', action='store_true', default=False, help='Manage lineups')
-
-    (options, args) = parser.parse_args()
-
-    app = Sd2Xmltv(options)
-    app.login()
-
-    if (options.manage == True):
-        app.manage()
-    else:
-        app.process()
-
-if __name__ == "__main__":
-    logging.basicConfig(format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s', level=logging.INFO)
-    main()
+#!/usr/bin/python# coding=utf-8import loggingfrom xmltv.common import XmltvChannel, XmltvProgrammefrom libschedulesdirect.common import Program, Broadcast, Channel, ProgramArtworkfrom libschedulesdirect.schedulesdirect import SchedulesDirectfrom optparse import OptionParserfrom datetime import datetimefrom libhdhomerun.client import HDHomeRunClientfrom gzip import GzipFilefrom itertools import isliceclass Sd2Xmltv:    def __init__(self, options):        self._logger = logging.getLogger(__name__)        """:type: logging.Logger"""        self._encoding = u"utf-8"        """:type: unicode"""        self._sd = SchedulesDirect(options.username, options.password)        """:type: SchedulesDirect"""        self._status = None        """:type: Status"""        self._output_path = options.output_path        """:type: unicode"""        self._days = options.days        """:type: int"""        self._hdhomerun_ip = options.hdhomerun        """:type: unicode"""        self._content_rating_preference_order = \            [u"Motion Picture Association of America", u"USA Parental Rating", u"Canadian Parental Rating"]    def login(self):        self._logger.info(u"Getting SchedulesDirect token.")        self._sd.get_token()        self._logger.info(u"Getting SchedulesDirect status.")        self._status = self._sd.get_status()        if not self._sd.is_online():            raise Exception(u"System is not online.")        expiry_delta = self._status.account.expires - datetime.utcnow()        self._logger.info(u"Account will expire on %s (%s days).", self._status.account.expires, int(expiry_delta.total_seconds() // 86400))        time_delta = datetime.utcnow() - self._status.last_data_update        hours, minutes = int(time_delta.total_seconds() // 3600), int((time_delta.total_seconds() % 3600) // 60)        self._logger.info(u"SchedulesDirect last update at %s (%s hours %s minutes ago).", self._status.last_data_update, hours, minutes)        if self._status.system_status.message is not None:            self._logger.info(u"Message: %s", self._status.system_status.message)    def manage(self):        self._sd.manage()    def process(self):        if len(self._status.lineups) == 0:            self._logger.info(u"Not subscribed to any lineups, exiting.")            return        channel_filter = None        if self._hdhomerun_ip is not None:            if self._hdhomerun_ip == "discover":                client = HDHomeRunClient()            else:                client = HDHomeRunClient(self._hdhomerun_ip.split(","))            client.init_device_list()            client.init_hdhomerun_lineups()            channel_filter = client.get_channel_list()        self._logger.info(u"Getting station/channel mappings for %s lineups.", len(self._status.lineups))        lineup_map_list = self._sd.get_lineup_map_list(self._status.lineups)        # self._filter = self.read_filter(lineup_map_list)                station_ids = [station.station_id for station in lineup_map_list.unique_stations(channel_filter)]        self._logger.info(u"Getting schedule hashes...")        schedule_hash_list = self._sd.get_schedule_hash_list(station_ids)        self._sd.refresh_cache(schedule_hash_list)        with open(self._output_path, "wb") as f:            if self._output_path[-3:] == ".gz":                f = GzipFile(fileobj=f)            f.write(u"<?xml version=\"1.0\" encoding=\"{0}\" ?>\n".format(self._encoding).encode(self._encoding))            f.write(u"<tv>\n".encode(self._encoding))            self._logger.info(u"Adding channels to xmltv document...")            for channel in lineup_map_list.unique_channels(channel_filter):                self._add_channel(f, channel)            self._logger.info(u"Adding programs to xmltv document...")            total_programs_added = 0            for channel in lineup_map_list.unique_channels(channel_filter):                channel_programs_added = 0                schedule_list = self._sd.get_cached_schedules([(channel.station_id, None)])                program_lookup = self._sd.get_cached_programs(schedule_list.get_program_ids())                artwork_ids = {program.artwork_id for program in program_lookup.values() if program.has_image_artwork}                program_artwork_lookup = self._sd.get_cached_artwork(list(artwork_ids))                for date in islice(schedule_list.schedule_dates(), self._days):                    programs_added = 0                    schedule = schedule_list.get_schedule(channel.station_id, date)                    if schedule is None:                        continue                    # check for error statuses from SD - for example 7020 SCHEDULE RANGE EXCEEDED                    # TODO: better handling of error responses                    if schedule.response_status is not None and schedule.response_status.code != 0:                        self._logger.warn(u"Skipping day due to: %s", schedule.response_status.message)                        continue                    for broadcast in schedule.broadcasts:                        programs_added += 1                        program = program_lookup[broadcast.program_id]                        program_artwork = program_artwork_lookup.get(program.artwork_id, None)                        self._add_programme(f, program, channel, broadcast, program_artwork)                    self._logger.debug(u"Added %s programs for channel %s on %s.", programs_added, channel.get_display_names().next(), date)                    channel_programs_added += programs_added                self._logger.info(u"Added %s programs for channel %s.", channel_programs_added, channel.get_display_names().next())                total_programs_added += channel_programs_added            self._logger.info(u"Added %s total programs.", total_programs_added)            f.write(u"</tv>\n".encode(self._encoding))            f.close()        self._logger.info(u"Finished.")    def _get_program_categories(self, program):        """        :param program:        :type program: Program        :return:        """        categories = set()        if program.is_sports_entity:            categories.add(u"Sports")        elif program.is_movie_entity:            categories.add(u"Movie / Drama")        elif program.is_show_entity or program.is_episode_entity:            if u"Children" in program.genres:                categories.add(u"Children's / Youth programs")            if u"Educational" in program.genres:                categories.add(u"Education / Science / Factual topics")            if u"Science" in program.genres:                categories.add(u"Education / Science / Factual topics")            if u"Newsmagazine" in program.genres:                categories.add(u"News magazine")            if u"Documentary" in program.genres:                categories.add(u"Documentary")            if u"News" in program.genres:                categories.add(u"News / Current affairs")            if u"Music" in program.genres:                categories.add(u"Music / Ballet / Dance")        else:            self._logger.warn(u"Unknown entity type: %s", program.entity_type)        return categories    def _add_programme(self, fp, program, channel, broadcast, program_artwork):        """        :param fp:        :param program:        :type program: Program        :param channel:        :type channel: Channel        :param broadcast:        :type broadcast: Broadcast        :param program_artwork:        :type program_artwork: ProgramArtwork        :return:        """        p = XmltvProgramme(broadcast.air_date_time, broadcast.end_date_time, channel.get_unique_id())        p.add_title(program.titles.title120)        if program.episode_title is not None:            p.add_subtitle(program.episode_title)        for category in self._get_program_categories(program):            p.add_category(category)        # for genre in program.genres:        #    p.add_category("sd: " + genre)        p.add_episode_num_dd_progid(program.program_id)        if program.metadata is not None and program.metadata.season_episode is not None:            if broadcast.multipart is None:                p.add_episode_num_xmltv_ns(                    season_num=program.metadata.season_episode.season,                    episode_num=program.metadata.season_episode.episode)            else:                p.add_episode_num_xmltv_ns(                    season_num=program.metadata.season_episode.season,                    episode_num=program.metadata.season_episode.episode,                    part_num=broadcast.multipart.part_number,                    total_parts=broadcast.multipart.total_parts)        elif program.episode_num is not None:            if broadcast.multipart is not None:                p.add_episode_num_xmltv_ns(                    part_num=broadcast.multipart.part_number,                    total_parts=broadcast.multipart.total_parts)            p.add_episode_num_onscreen(u"E{0}".format(program.episode_num))        description_elements = []        if program.episode_title is not None:            description_elements.append(u"\"{0}\"".format(program.episode_title))        program_attributes = []        if program.show_type is not None:            program_attributes.append(program.show_type)        if program.movie is not None and program.movie.year is not None:            program_attributes.append(program.movie.year)        elif broadcast.is_live:            program_attributes.append(u"Live")        elif broadcast.is_new:            program_attributes.append(u"New")        elif program.original_air_date is not None:            program_attributes.append(unicode(program.original_air_date.strftime("%Y-%m-%d")))        if program.metadata is not None and program.metadata.season_episode is not None:            program_attributes.append(u"S{0.season}E{0.episode}".format(program.metadata.season_episode))        elif program.episode_num is not None:            program_attributes.append(u"E{0}".format(program.episode_num))        if broadcast.multipart is not None:            program_attributes.append(u"{0.part_number} of {0.total_parts}".format(broadcast.multipart))        if len(program.content_ratings) != 0:            for preference in self._content_rating_preference_order:                rating = program.get_content_rating(preference)                if rating is None:                    continue                program_attributes.append(rating.code)                break        if program.movie is not None and len(program.movie.quality_ratings) != 0:            selected_quality_rating = next((quality_rating for quality_rating in program.movie.quality_ratings if quality_rating.max_rating == u"4"), None)            if selected_quality_rating is not None:                program_attributes.append(selected_quality_rating.get_stars())        if len(program_attributes) != 0:            description_elements.append(u"; ".join(program_attributes))        if program.descriptions is not None and u"en" in program.descriptions.languages():            description_elements.append(program.descriptions.get_longest_text())        if len(program.recommendations) != 0:            description_elements.append(u" See also: {0}".format(u", ".join([pr.title120 for pr in program.recommendations])))        p.add_description(u" \u2022 ".join(description_elements))        if program.movie is not None:            for quality_rating in program.movie.quality_ratings:                p.add_star_rating(quality_rating.rating, quality_rating.max_rating, quality_rating.ratings_body)        if program.is_episode_entity and not broadcast.is_new and program.original_air_date is not None:            p.add_previously_shown(start=program.original_air_date)        if program_artwork is not None:            # "Banner-L2", "Banner-L3", "Iconic", "Staple"            artwork_album = program_artwork.artwork_album.aspect_preference(u"3x4", u"4x3", u"2x3", u"16x9").size_preference(u"Md").category_preference(u"Poster Art", u"Box Art", u"Banner", u"Banner-L1", u"Banner-LO", u"Banner-L2", u"Logo").tier_preference(u"Series", u"Season", u"Sport", u"Team", u"Organization", u"College", None)            artwork = artwork_album[0] if artwork_album else None            if artwork is not None:                p.add_icon(artwork.url)        p.save(fp, encoding=self._encoding)    def _add_channel(self, fp, channel):        channel_id = channel.get_unique_id()        self._logger.info(u"Adding channel %s to xmltv document.", channel_id)        xmltv_channel = XmltvChannel(channel_id)        [xmltv_channel.add_display_name(display_name) for display_name in channel.get_display_names()]        xmltv_channel.save(fp, encoding=self._encoding)    def _export_icons(self, stations):        import urllib        import os        from urlparse import urlparse        for station in stations:            if station.logo is None:                continue            url = station.logo.url            path = urlparse(url)            (path, filename) = os.path.split(path[2])            (filename, extension) = os.path.splitext(filename)            image_on_web = urllib.urlopen(url)            if image_on_web.headers.maintype != "image":                image_on_web.close()                continue            f = open(station.station_id + extension, "wb")            f.write(image_on_web.read())            f.close()            image_on_web.close()def main():    parser = OptionParser()    parser.add_option(u"-u", u"--username", dest=u"username", help=u"SchedulesDirect.org username.")    parser.add_option(u"-p", u"--password", dest=u"password", help=u"SchedulesDirect.org password.")    parser.add_option(u"-o", u"--output", dest=u"output_path", default=u"./xmltv.xml", help=u"Output path and filename (use .gz to compress).")    parser.add_option(u"-d", u"--days", dest=u"days", type="int", default=14, help=u"Number of days to import")    parser.add_option(u"-m", u"--manage", dest=u"manage", action="store_true", default=False, help=u"Manage lineups")    parser.add_option(u"-i", u"--incremental", dest=u"incremental", action="store_true", default=False, help=u"Enable incremental update.")    parser.add_option(u"-v", u"--hdhomerun", dest=u"hdhomerun", default=None, help=u"HDHomeRun IP address or 'discover' for channel filtering.")    (options, args) = parser.parse_args()    app = Sd2Xmltv(options)    app.login()    if options.manage:        app.manage()    else:        app.process()if __name__ == "__main__":    logging.basicConfig(format=u"%(asctime)s %(name)-35s %(levelname)-8s %(message)s", level=logging.INFO)    main()

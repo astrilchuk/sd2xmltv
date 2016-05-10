@@ -3,159 +3,256 @@
 
 import urllib2
 import json
-import hashlib
 import gzip
-import StringIO
 import logging
+from . import jsonify
+try:
+    import cStringIO as StringIO
+except ImportError:
+    import StringIO
 
-class SchedulesDirectApi:
+_base_url = "https://json.schedulesdirect.org"
+_base_uri = "/20141201/"
 
-    def __init__(self, username, password):
-        self._logger = logging.getLogger(__name__)
-        self._username = username
-        self._password_hash = hashlib.sha1(password).hexdigest()
-        self._base_url = 'https://json.schedulesdirect.org'
-        self._base_uri = '/20141201/'
-        self._token = None
-        self._status = None
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARN)
 
-    def get_token(self):
-        self._logger.debug('get_token()')
-        if self._token is not None:
-            return self._token
-        request = self._get_request('POST', 'token', {'username': self._username, 'password': self._password_hash})
-        response = self._get_json_response(request)
-        if 'token' in response:
-            self._token = response['token']
-        return response
 
-    def get_status(self):
-        self._logger.debug('get_status()')
-        if self._status is not None:
-            return self._status
-        request = self._get_token_request('GET', 'status')
-        response = self._get_json_response(request)
-        self._status = response['systemStatus'][0]['status']
-        return response
+def get_token(username, password_hash):
+    """
 
-    def is_online(self):
-        self._logger.debug('is_online()')
-        return self._status == 'Online'
+    :param username:
+    :type username: unicode
+    :param password_hash:
+    :type password_hash: unicode
+    :return:
+    """
+    logger.debug("get_token()")
+    return _post("token", post_data={"username": username, "password": password_hash})
 
-    def _validate_online(self):
-        self._logger.debug('_validate_online()')
-        if not self.is_online():
-            raise Exception('System status is not Online')
 
-    def get_headends_by_postal_code(self, country, postal_code):
-        self._logger.debug('get_headends_by_postal_code("%s", "%s")' % (country, postal_code))
-        self._validate_online()
-        request = self._get_token_request('GET', 'headends?country=%s&postalcode=%s' % (country, postal_code))
-        response = self._get_json_response(request)
-        return response
+def get_status(token):
+    """
 
-    def get_subscribed_lineups(self):
-        self._logger.debug('get_lineups()')
-        self._validate_online()
-        request = self._get_token_request('GET', 'lineups')
-        response = self._get_json_response(request)
-        if 'response' in response and response['response'] == 'NO_LINEUPS':
-            return []
-        lineups = response["lineups"]
-        return lineups
+    :param token:
+    :type token: unicode
+    :return:
+    """
+    logger.debug("get_status()")
+    return _get("status", token)
 
-    def add_lineup(self, lineup_id):
-        self._logger.debug('add_lineup("%s")' % (lineup_id))
-        self._validate_online()
-        request = self._get_token_request('PUT', 'lineups/' + lineup_id)
-        response = self._get_json_response(request)
-        return response
 
-    def remove_lineup(self, lineup_id):
-        self._logger.debug('remove_lineup("%s")' % (lineup_id))
-        self._validate_online()
-        request = self._get_token_request('DELETE', 'lineups/' + lineup_id)
-        response = self._get_json_response(request)
-        return response
+def get_headends_by_postal_code(token, country, postal_code):
+    """
 
-    def get_lineup(self, lineup_id):
-        self._logger.debug('get_lineup("%s")' % (lineup_id))
-        self._validate_online()
-        request = self._get_token_request('GET', 'lineups/' + lineup_id)
-        response = self._get_json_response(request)
-        return response
+    :param token:
+    :type token: unicode
+    :param country:
+    :type country: unicode
+    :param postal_code:
+    :type postal_code: unicode
+    :return:
+    """
+    logger.debug("get_headends_by_postal_code('%s', '%s')", country, postal_code)
+    uri = "headends?country={0}&postalcode={1}".format(country, postal_code)
+    return _get(uri, token)
 
-    def get_schedules(self, stations):
-        if self._logger.isEnabledFor(logging.DEBUG):
-            self._logger.debug('get_schedules("%s")' % (stations))
-        self._validate_online()
-        request = self._get_token_request('POST', 'schedules', stations)
-        response = self._get_json_response(request)
-        return response
 
-    def get_programs(self, program_ids):
-        if self._logger.isEnabledFor(logging.DEBUG):
-            self._logger.debug('get_programs(%s)' % (program_ids))
-        self._validate_online()
-        request = self._get_token_request('POST', 'programs', program_ids)
-        response = self._get_json_response(request)
-        return response
+def get_subscribed_lineups(token):
+    """
 
-    def _get_request(self, method, uri, post_data = None):
-        if self._logger.isEnabledFor(logging.DEBUG):
-            self._logger.debug('_get_request("%s", %s)' % (uri, post_data))
-        json_data = None
-        if post_data is not None:
-            json_data = json.dumps(post_data)
-        request = urllib2.Request(url = self._base_url + self._base_uri + uri, data = json_data)
-        request.get_method = lambda: method
-        if json_data is not None:
-            request.add_header('Content-Length', len(json_data))
-        request.add_header('Content-Type', 'application/json')
-        request.add_header('User-Agent', 'sd2xmltv/0.1 (adrian.strilchuk@gmail.com)')
-        request.add_header('Accept', 'application/json')
-        request.add_header('Accept-Encoding', 'deflate, gzip')
-        return request
+    :param token:
+    :type token: unicode
+    :return:
+    """
+    logger.debug("get_lineups()")
+    response = _get("lineups", token)
+    if "response" in response and response["response"] == "NO_LINEUPS":
+        return []
+    lineups = response["lineups"]
+    return lineups
 
-    def _get_token_request(self, method, uri, data = None):
-        if self._logger.isEnabledFor(logging.DEBUG):
-            self._logger.debug('_get_token_request("%s", %s)' % (uri, data))
-        request = self._get_request(method, uri, data)
-        request.add_header('token', self.get_token())
-        return request
 
-    def _get_json_response(self, request):
-        self._logger.debug('_get_json_response()')
-        response = self._get_response(request)
-        json_data = json.loads(response)
-        #self._logger.debug('response:\n' + json.dumps(json_data, indent = 4))
-        return json_data
+def add_lineup(token, lineup_id):
+    """
 
-    def _get_delimited_json_response(self, request, delimiter = '\n'):
-        self._logger.debug('_get_delimited_json_response()')
-        response = self._get_response(request)
-        result = [json.loads(line) for line in response.split(delimiter) if line != '']
-        #self._logger.debug('response:\n' + json.dumps(result, indent = 4))
-        return result
+    :param token:
+    :type token: unicode
+    :param lineup_id:
+    :type lineup_id: unicode
+    :return:
+    """
+    logger.debug("add_lineup('%s')", lineup_id)
+    uri = "lineups/{0}".format(lineup_id)
+    return _put(uri, token)
 
-    def _get_response(self, request):
-        self._logger.debug('_get_response()')
-        opener = None
-        if self._logger.isEnabledFor(logging.DEBUG):
-            opener = urllib2.build_opener(urllib2.HTTPSHandler(debuglevel=1))
-        else:
-            opener = urllib2.build_opener(urllib2.HTTPSHandler())
-        response = None
-        try:
-            response = opener.open(request)
-        except urllib2.HTTPError, error:
-            error = error.read()
-            self._logger.error(error)
-            return error
-        raw_data = response.read()
-        if response.headers.get('content-encoding', '') == 'gzip':
-            raw_data = StringIO.StringIO(raw_data)
-            gzipFile = gzip.GzipFile(fileobj = raw_data)
-            raw_data = gzipFile.read()
-        #self._logger.debug('raw response:\n' + raw_data)
-        return raw_data
+
+def remove_lineup(token, lineup_id):
+    """
+
+    :param token:
+    :type token: unicode
+    :param lineup_id:
+    :type lineup_id: unicode
+    :return:
+    """
+    logger.debug("remove_lineup('%s')", lineup_id)
+    uri = "lineups/{0}".format(lineup_id)
+    return _delete(uri, token)
+
+
+def get_lineup(token, lineup_id):
+    """
+
+    :param token:
+    :type token: unicode
+    :param lineup_id:
+    :type lineup_id: unicode
+    :return:
+    """
+    logger.debug("get_lineup('%s')", lineup_id)
+    uri = "lineups/{0}".format(lineup_id)
+    return _get(uri, token)
+
+
+def get_schedule_md5s(token, stations):
+    """
+
+    :param token:
+    :type token: unicode
+    :param stations:
+    :type stations: list[dict]
+    :return:
+    """
+    logger.debug("get_schedule_md5s(%s)", stations)
+    return _post("schedules/md5", token, stations)
+
+
+def get_schedules(token, stations):
+    """
+
+    :param token:
+    :type token: unicode
+    :param stations:
+    :type stations: list[dict]
+    :return:
+    """
+    logger.debug("get_schedules(%s)", stations)
+    return _post("schedules", token, stations)
+
+
+def get_programs(token, program_ids):
+    """
+
+    :param token:
+    :type token: unicode
+    :param program_ids:
+    :type program_ids: list[unicode]
+    :return:
+    """
+    logger.debug("get_programs(%s)", program_ids)
+    return _post("programs", token, program_ids)
+
+
+def get_metadata(program_ids):
+    logger.debug("get_metadata(%s)", program_ids)
+    return _post("metadata/programs", post_data=program_ids)
+
+
+def _get(uri, token=None):
+    request = _get_request("GET", uri, token)
+    response = _get_response(request)
+    return response
+
+
+def _post(uri, token=None, post_data=None):
+    request = _get_request("POST", uri, token, post_data)
+    response = _get_response(request)
+    return response
+
+
+def _put(uri, token=None, post_data=None):
+    request = _get_request("PUT", uri, token, post_data)
+    response = _get_response(request)
+    return response
+
+
+def _delete(uri, token=None, post_data=None):
+    request = _get_request("DELETE", uri, token, post_data)
+    response = _get_response(request)
+    return response
+
+
+def _get_request(method, uri, token=None, post_data=None):
+    """
+
+    :param method:
+    :type method: str
+    :param uri:
+    :type uri: str
+    :param post_data:
+    :return:
+    """
+    logger.debug("_get_request('%s', '%s', '%s', %s)", method, uri, token, post_data)
+    json_data = None
+    if post_data is not None:
+        json_data = jsonify(post_data)
+    request = urllib2.Request(url=_base_url + _base_uri + uri, data=json_data)
+    request.get_method = lambda: method
+    if json_data is not None:
+        request.add_header("Content-Length", len(json_data))
+    request.add_header("Content-Type", "application/json; charset=utf-8")
+    request.add_header("User-Agent", "sd2xmltv/0.2 (adrian.strilchuk@gmail.com)")
+    request.add_header("Accept", "application/json")
+    request.add_header("Accept-Encoding", "deflate, gzip")
+    if token is not None:
+        request.add_header("token", token)
+    return request
+
+
+def _get_token_request(token, method, uri, data=None):
+    """
+
+    :param token:
+    :type token: unicode
+    :param method:
+    :type method: str
+    :param uri:
+    :type uri: str
+    :param data:
+    :return:
+    """
+    logger.debug("_get_token_request('%s', '%s', %s)", method, uri, data)
+    request = _get_request(method, uri, data)
+    request.add_header("token", token)
+    return request
+
+
+def _get_response(request):
+    logger.debug("_get_response()")
+
+    if logger.isEnabledFor(logging.DEBUG):
+        opener = urllib2.build_opener(urllib2.HTTPSHandler(debuglevel=1))
+    else:
+        opener = urllib2.build_opener(urllib2.HTTPSHandler())
+
+    try:
+        response = opener.open(request)
+    except urllib2.HTTPError, error:
+        error = error.read()
+        logging.error(error)
+        return error
+
+    content_encoding = response.headers.get("content-encoding", "")
+    content_type = response.headers.get("content-type")
+    encoding = content_type.split("charset=")[-1]
+
+    buf = StringIO.StringIO(response.read())
+
+    if content_encoding == "gzip":
+        buf = gzip.GzipFile(fileobj=buf)
+
+    if content_type.startswith("application/json"):
+        return json.load(fp=buf, encoding=encoding)
+
+    return unicode(buf.read(), encoding)
