@@ -233,6 +233,14 @@ class SchedulesDirectCache:
         if not self._in_context:
             self._db.commit()
 
+    def delete_expired_artwork(self):
+        self._logger.info(u"delete_expired_artwork")
+        sql = u"DELETE FROM artwork WHERE artwork_id NOT IN (SELECT DISTINCT artwork_id FROM programs)"
+        cursor = self._db.execute(sql)
+        self._logger.info(u"%s rows affected.", cursor.rowcount)
+        if not self._in_context:
+            self._db.commit()
+
 
 if __name__ == "__main__":
     pass

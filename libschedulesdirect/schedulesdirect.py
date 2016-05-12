@@ -170,6 +170,9 @@ class SchedulesDirect(object):
             self._logger.info(u"Deleting expired programs...")
             self._cache.delete_expired_programs()
 
+            self._logger.info(u"Deleting expired artwork...")
+            self._cache.delete_expired_artwork()
+
             self._logger.info(u"Compressing cache database...")
             self._cache.compress_database()
 
