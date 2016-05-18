@@ -16,7 +16,42 @@ Feature Film; 1988; PG; ***½ • After a wish turns 12-year-old Josh Baskin (Da
 
 For Kodi addon instructions, see README in the /kodi folder.
 
-TODO: Describe the installation process
+### Installation for TVHeadend
+
+These instructions are specific for TVHeadend users, but hopefully can help out other users as well.
+
+1. Configure TVHeadend to listen on a socket for xmltv (typically stored in `/home/hts/.hts/tvheadend/epggrab/xmltv.sock`)
+2. Unzip or `git clone {url}` into folder accessible to the `hts` user.
+3. `chmod +x sd2xmltv.pl`
+4. Configure sd2xmltv (NOTE currently only works for US users):
+ 
+ ```
+./sd2xmltv.py -u {USERNAME} -p {PASSWORD} -m
+ ```
+5. Create script which runs listings update regularly:
+ ```
+!/bin/bash
+SRC=/home/hts/sd2xmltv/xmltv.xml
+SOCKET=/home/hts/.hts/tvheadend/epggrab/xmltv.sock
+EMAIL={EMAILADDR}
+USERNAME={USERNAME}
+PASSWORD={PASSWORD}
+
+echo "Updating listings" | mail -s "PVR updating" $EMAIL
+
+cd /home/hts/sd2xmltv/
+OUTPUT=$(./sd2xmltv.py -u $USERNAME -p $PASSWORD -i 2>&1)
+
+if [ -s $SRC ];
+then
+	cat $SRC | socat stdin UNIX-CONNECT:$SOCKET
+fi
+
+echo $OUTPUT | mail -s "PVR updated" $EMAIL
+ ```
+6. Make script executable `chmod +x {SCRIPT}`
+7. Install this script in the `hts` user's crontab `crontab -e`
+8. Execute script and ensure output is as expected
 
 ## Usage
 
