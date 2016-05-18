@@ -24,11 +24,11 @@ These instructions are specific for TVHeadend users, but hopefully can help out 
 2. Unzip or `git clone {url}` into folder accessible to the `hts` user.
 3. `chmod +x sd2xmltv.pl`
 4. Configure sd2xmltv (NOTE currently only works for US users):
-```
+ ```
 ./sd2xmltv.py -u {USERNAME} -p {PASSWORD} -m
-```
+ ```
 5. Create script which runs listings update regularly:
-```
+ ```
 !/bin/bash
 SRC=/home/hts/sd2xmltv/xmltv.xml
 SOCKET=/home/hts/.hts/tvheadend/epggrab/xmltv.sock
@@ -47,7 +47,7 @@ then
 fi
 
 echo $OUTPUT | mail -s "PVR updated" $EMAIL
-```
+ ```
 6. Make script executable `chmod +x {SCRIPT}`
 7. Install this script in the `hts` user's crontab `crontab -e`
 8. Execute script and ensure output is as expected
