@@ -1517,6 +1517,9 @@ class Program(object):
         self.episode_image = None
         """:type: Artwork"""
 
+        self.duration = None
+        """:type: int"""
+
     @property
     def artwork_id(self):
         if not self.has_image_artwork:
@@ -1642,6 +1645,9 @@ class Program(object):
 
         if "episodeImage" in dct:
             program.episode_image = Artwork.from_dict(dct.pop("episodeImage"))
+
+        if "duration" in dct:
+            program.duration = dct.pop("duration")
 
         if len(dct) != 0:
             logging.warn("Key(s) not processed for Program: %s", ", ".join(dct.keys()))
