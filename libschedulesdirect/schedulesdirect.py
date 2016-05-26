@@ -317,52 +317,53 @@ class SchedulesDirect(object):
     def _add_lineup(self):
         while True:
             print(u"\nAdd Lineup\n")
-            print(u"Enter 5-digit zip or postal code or 'x' to cancel:")
-            postal_code = raw_input("> ")
-            if postal_code == "x":
+            print(u"Enter 3-character country/region code or 'x' to cancel:")
+            country_code = raw_input("> ")
+            if country_code == "x":
                 break
 
-            # TODO: Handle more than just USA and CAN
-            country = "USA"
-            if postal_code[0].isalpha():
-                country = "CAN"
-
-            headends = self.get_headends_by_postal_code(country, postal_code)
-
             while True:
-                subscribed_lineups = self.get_subscribed_lineups()
-                subscribed_lineup_ids = [lineup.lineup_id for lineup in subscribed_lineups]
-
-                headend_lineups = [(headend, lineup) for headend in headends for lineup in headend.lineups if lineup.lineup_id not in subscribed_lineup_ids]
-
-                transport_set = {headend.type for (headend, lineup) in headend_lineups}
-
-                options = []
-                count = 0
-                for transport in transport_set:
-                    print(u"\nTransport: {0}\n".format(transport))
-                    for (headend, lineup) in [(headend, lineup) for (headend, lineup) in headend_lineups if headend.type == transport]:
-                        options.append((headend, lineup))
-                        count += 1
-                        print(u"\t{0}. {1.name} ({1.location})".format(count, lineup))
-
-                print(u"\nChoose a lineup to add or 'x' to cancel.")
-                choice = raw_input("> ")
-
-                if choice == "x":
+                print(u"Enter zip/postal code or 'x' to cancel:")
+                postal_code = raw_input("> ")
+                if postal_code == "x":
                     break
 
-                choice = int(choice) - 1
-                (headend, lineup) = options[choice]
+                headends = self.get_headends_by_postal_code(country_code, postal_code)
 
-                print(u"Are you sure you want to add '{0} ({1})'? (y/n)".format(lineup.name, headend.location))
-                if raw_input("> ") != "y":
-                    continue
+                while True:
+                    subscribed_lineups = self.get_subscribed_lineups()
+                    subscribed_lineup_ids = [lineup.lineup_id for lineup in subscribed_lineups]
 
-                response = self.add_lineup(lineup.lineup_id)
+                    headend_lineups = [(headend, lineup) for headend in headends for lineup in headend.lineups if lineup.lineup_id not in subscribed_lineup_ids]
 
-                print(u"Schedules Direct returned '{0}'.".format(response.response_status.message))
-                print(u"{0} lineup changes remaining.\n".format(response.changes_remaining))
+                    transport_set = {headend.type for (headend, lineup) in headend_lineups}
+
+                    options = []
+                    count = 0
+                    for transport in transport_set:
+                        print(u"\nTransport: {0}\n".format(transport))
+                        for (headend, lineup) in [(headend, lineup) for (headend, lineup) in headend_lineups if headend.type == transport]:
+                            options.append((headend, lineup))
+                            count += 1
+                            print(u"\t{0}. {1.name} ({1.location})".format(count, lineup))
+
+                    print(u"\nChoose a lineup to add or 'x' to cancel.")
+                    choice = raw_input("> ")
+
+                    if choice == "x":
+                        break
+
+                    choice = int(choice) - 1
+                    (headend, lineup) = options[choice]
+
+                    print(u"Are you sure you want to add '{0} ({1})'? (y/n)".format(lineup.name, headend.location))
+                    if raw_input("> ") != "y":
+                        continue
+
+                    response = self.add_lineup(lineup.lineup_id)
+
+                    print(u"Schedules Direct returned '{0}'.".format(response.response_status.message))
+                    print(u"{0} lineup changes remaining.\n".format(response.changes_remaining))
 
     def _list_lineup_channels(self):
 
