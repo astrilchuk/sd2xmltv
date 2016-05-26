@@ -1514,6 +1514,9 @@ class Program(object):
         self.resource_id = None
         """:type: unicode"""
 
+        self.episode_image = None
+        """:type: Artwork"""
+
     @property
     def artwork_id(self):
         if not self.has_image_artwork:
@@ -1636,6 +1639,9 @@ class Program(object):
 
         if "resourceID" in dct:
             program.resource_id = dct.pop("resourceID")
+
+        if "episodeImage" in dct:
+            program.episode_image = Artwork.from_dict(dct.pop("episodeImage"))
 
         if len(dct) != 0:
             logging.warn("Key(s) not processed for Program: %s", ", ".join(dct.keys()))
