@@ -228,11 +228,15 @@ class Sd2Xmltv:
             if broadcast.multipart is None:
                 p.add_episode_num_xmltv_ns(
                     season_num=program.metadata.season_episode.season,
-                    episode_num=program.metadata.season_episode.episode)
+                    episode_num=program.metadata.season_episode.episode,
+                    total_seasons=program.metadata.season_episode.total_seasons,
+                    total_episodes=program.metadata.season_episode.total_episodes)
             else:
                 p.add_episode_num_xmltv_ns(
                     season_num=program.metadata.season_episode.season,
                     episode_num=program.metadata.season_episode.episode,
+                    total_seasons=program.metadata.season_episode.total_seasons,
+                    total_episodes=program.metadata.season_episode.total_episodes,
                     part_num=broadcast.multipart.part_number,
                     total_parts=broadcast.multipart.total_parts)
         elif program.episode_num is not None:
