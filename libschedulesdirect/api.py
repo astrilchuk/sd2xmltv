@@ -42,6 +42,24 @@ def get_status(token):
     return _get("status", token)
 
 
+def get_available_services():
+    """
+
+    :return:
+    """
+    logger.debug("get_available_services()")
+    return _get("available")
+
+
+def get_service_countries():
+    """
+
+    :return:
+    """
+    logger.debug("get_service_countries")
+    return _get("available/countries")
+
+
 def get_headends_by_postal_code(token, country, postal_code):
     """
 
