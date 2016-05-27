@@ -1437,6 +1437,79 @@ class ProgramKeywords(object):
 
         return program_keywords
 
+
+class ProgramAward(object):
+    def __init__(self):
+        self.category = None
+        """:type: unicode"""
+
+        self.award_name = None
+        """:type: unicode"""
+
+        self.name = None
+        """:type: unicode"""
+
+        self.year = None
+        """:type: unicode"""
+
+        self.recipient = None
+        """:type: unicode"""
+
+        self.won = None
+        """:type: bool"""
+
+        self.personId = None
+        """:type: int"""
+
+    @classmethod
+    def from_iterable(cls, iterable):
+        """
+
+        :param iterable:
+        :type iterable: collections.Iterable[dict]
+        :return:
+        :rtype: list[ProgramAward]
+        """
+        return [cls.from_dict(program_award) for program_award in iterable]
+
+    @classmethod
+    def from_dict(cls, dct):
+        """
+
+        :param dct:
+        :type dct: dict
+        :return:
+        :rtype: ProgramAward
+        """
+        program_award = cls()
+
+        if u"category" in dct:
+            program_award.category = dct.pop(u"category")
+
+        if u"awardName" in dct:
+            program_award.award_name = dct.pop(u"awardName")
+
+        if u"name" in dct:
+            program_award.name = dct.pop(u"name")
+
+        if u"year" in dct:
+            program_award.year = dct.pop(u"year")
+
+        if u"recipient" in dct:
+            program_award.recipient = dct.pop(u"recipient")
+
+        if u"won" in dct:
+            program_award.won = dct.pop(u"won")
+
+        if u"personId" in dct:
+            program_award.personId = dct.pop(u"personId")
+
+        if len(dct) != 0:
+            logging.warn("Key(s) not processed for ProgramAward: %s", ", ".join(dct.keys()))
+
+        return program_award
+
+
 class Program(object):
     def __init__(self):
         self.program_id = None
@@ -1519,6 +1592,9 @@ class Program(object):
 
         self.duration = None
         """:type: int"""
+
+        self.awards = None
+        """:type: list[ProgramAward]"""
 
     @property
     def artwork_id(self):
@@ -1648,6 +1724,9 @@ class Program(object):
 
         if "duration" in dct:
             program.duration = dct.pop("duration")
+
+        if "awards" in dct:
+            program.awards = ProgramAward.from_iterable(dct.pop("awards"))
 
         if len(dct) != 0:
             logging.warn("Key(s) not processed for Program: %s", ", ".join(dct.keys()))
