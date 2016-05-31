@@ -1,22 +1,20 @@
 import logging
+from datetime import datetime
 from util import parse_date, parse_datetime
 
 
 class ScheduleMetadata(object):
     def __init__(self):
-        self.modified = None
-        """:type: datetime"""
+        self.modified = None  # type: datetime
 
-        self.md5 = None
-        """:type: unicode"""
+        self.md5 = None  # type: unicode
 
-        self.start_date = None
-        """:type: datetime"""
+        self.start_date = None  # type: datetime
 
         self.code = None
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> ScheduleMetadata
         """
 
         :param dct:

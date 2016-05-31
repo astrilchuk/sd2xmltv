@@ -6,29 +6,24 @@ from channel import Channel
 
 class LineupMap(object):
     def __init__(self):
-        self.channels = None
-        """:type: list[Channel]"""
+        self.channels = None  # type: List[Channel]
 
-        self.stations = None
-        """:type: list[Station]"""
+        self.stations = None  # type: List[Station]
 
-        self.lineup = None
-        """:type: Lineup"""
+        self.lineup = None  # type: Lineup
 
-    def __unicode__(self):
+    def __unicode__(self):  # type: () -> unicode
         return u"LineupMap for Lineup {0.lineup_id}".format(self)
 
     def __str__(self):
         return unicode(self).encode("utf-8")
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> LineupMap
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: LineupMap
         """
         lineup_map = cls()
 
@@ -46,12 +41,10 @@ class LineupMap(object):
 
         return lineup_map
 
-    def get_station(self, station_id):
+    def get_station(self, station_id):  # type: (unicode) -> Station
         """
 
         :param station_id:
-        :type station_id: unicode
         :return:
-        :rtype: Station
         """
         return next((station for station in self.stations if station.station_id == station_id), None)

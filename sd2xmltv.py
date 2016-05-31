@@ -3,7 +3,7 @@
 
 import logging
 from xmltv import XmltvChannel, XmltvProgramme
-from libschedulesdirect.common import Program, Broadcast, Channel, ProgramArtwork
+from libschedulesdirect.common import Status, Program, Broadcast, Channel, ProgramArtwork
 from libschedulesdirect.schedulesdirect import SchedulesDirect
 from optparse import OptionParser
 from datetime import datetime
@@ -14,32 +14,25 @@ from itertools import islice
 
 class Sd2Xmltv:
     def __init__(self, options):
-        self._logger = logging.getLogger(__name__)
-        """:type: logging.Logger"""
+        self._logger = logging.getLogger(__name__)  # type: logging.Logger
 
-        self._encoding = u"utf-8"
-        """:type: unicode"""
+        self._encoding = u"utf-8"  # type: unicode
 
-        self._sd = SchedulesDirect(options.username, options.password)
-        """:type: SchedulesDirect"""
+        self._sd = SchedulesDirect(options.username, options.password)  # type: SchedulesDirect
 
-        self._status = None
-        """:type: Status"""
+        self._status = None  # type: Status
 
-        self._output_path = options.output_path
-        """:type: unicode"""
+        self._output_path = options.output_path  # type: unicode
 
-        self._days = options.days
-        """:type: int"""
+        self._days = options.days  # type: int
 
-        self._hdhomerun_ip = options.hdhomerun
-        """:type: unicode"""
+        self._hdhomerun_ip = options.hdhomerun  # type: unicode
 
-        self._episode_title_in_description = False
-        """:type: bool"""
+        self._episode_title_in_description = False  # type: bool
 
         self._content_rating_preference_order = \
             [u"Motion Picture Association of America", u"USA Parental Rating", u"Canadian Parental Rating"]
+        # type: List[unicode]
 
     def login(self):
         self._logger.info(u"Getting SchedulesDirect token.")
@@ -153,11 +146,10 @@ class Sd2Xmltv:
 
         self._logger.info(u"Finished.")
 
-    def _get_program_categories(self, program):
+    def _get_program_categories(self, program):  # type: (Program) -> Set[unicode]
         """
 
         :param program:
-        :type program: Program
         :return:
         """
         categories = set()

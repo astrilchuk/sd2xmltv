@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 from util import parse_date
 from programtitles import ProgramTitles
 from programeventdetails import ProgramEventDetails
@@ -16,113 +17,85 @@ from programaward import ProgramAward
 
 class Program(object):
     def __init__(self):
-        self.program_id = None
-        """:type: unicode"""
+        self.program_id = None  # type: unicode
 
-        self.md5 = None
-        """:type: unicode"""
+        self.md5 = None  # type: unicode
 
-        self.titles = None
-        """:type: ProgramTitles"""
+        self.titles = None  # type: ProgramTitles
 
-        self.event_details = None
-        """:type: ProgramEventDetails"""
+        self.event_details = None  # type: ProgramEventDetails
 
-        self.descriptions = None
-        """:type: ProgramDescriptionList"""
+        self.descriptions = None  # type: ProgramDescriptionList
 
-        self.original_air_date = None
-        """:type: date"""
+        self.original_air_date = None  # type: date
 
-        self.genres = []
-        """:type: list[unicode]"""
+        self.genres = []  # type: List[unicode]
 
-        self.episode_title = None
-        """:type: unicode"""
+        self.episode_title = None  # type: unicode
 
-        self.metadata = None
-        """:type: ProgramMetadata"""
+        self.metadata = None  # type: ProgramMetadata
 
-        self.cast = []
-        """:type: list[ProgramCast]"""
+        self.cast = []  # type: List[ProgramCast]
 
-        self.crew = []
-        """:type: list[ProgramCrew]"""
+        self.crew = []  # type: List[ProgramCrew]
 
-        self.show_type = None
-        """:type: unicode"""
+        self.show_type = None  # type: unicode
 
-        self.has_image_artwork = False
-        """:type: bool"""
+        self.has_image_artwork = False  # type: bool
 
-        self.content_ratings = []
-        """:type: list[ProgramContentRating]"""
+        self.content_ratings = []  # type: List[ProgramContentRating]
 
-        self.content_advisories = []
-        """:type: list[unicode]"""
+        self.content_advisories = []  # type: List[unicode]
 
-        self.recommendations = []
-        """:type: list[ProgramRecommendation]"""
+        self.recommendations = []  # type: List[ProgramRecommendation]
 
-        self.movie = None
-        """:type: ProgramMovie"""
+        self.movie = None  # type: ProgramMovie
 
-        self.episode_num = None
-        """:type: int"""
+        self.episode_num = None  # type: int
 
-        self.animation = None
-        """:type: unicode"""
+        self.animation = None  # type: unicode
 
-        self.audience = None
-        """:type: unicode"""
+        self.audience = None  # type: unicode
 
-        self.holiday = None
-        """:type: unicode"""
+        self.holiday = None  # type: unicode
 
-        self.keywords = None
-        """:type: ProgramKeywords"""
+        self.keywords = None  # type: ProgramKeywords
 
-        self.official_url = None
-        """:type: unicode"""
+        self.official_url = None  # type: unicode
 
-        self.entity_type = None
-        """:type: unicode"""
+        self.entity_type = None  # type: unicode
 
-        self.resource_id = None
-        """:type: unicode"""
+        self.resource_id = None  # type: unicode
 
-        self.episode_image = None
-        """:type: Image"""
+        self.episode_image = None  # type: Image
 
-        self.duration = None
-        """:type: int"""
+        self.duration = None  # type: int
 
-        self.awards = None
-        """:type: list[ProgramAward]"""
+        self.awards = None  # type: List[ProgramAward]
 
     @property
-    def artwork_id(self):
+    def artwork_id(self):  # type: () -> unicode
         if not self.has_image_artwork:
             return None
         return self.program_id[0:10]
 
     @property
-    def is_show_entity(self):
+    def is_show_entity(self):  # type: () -> bool
         return self.entity_type == u"Show"
 
     @property
-    def is_episode_entity(self):
+    def is_episode_entity(self):  # type: () -> bool
         return self.entity_type == u"Episode"
 
     @property
-    def is_movie_entity(self):
+    def is_movie_entity(self):  # type: () -> bool
         return self.entity_type == u"Movie"
 
     @property
-    def is_sports_entity(self):
+    def is_sports_entity(self):  # type: () -> bool
         return self.entity_type == u"Sports"
 
-    def __unicode__(self):
+    def __unicode__(self):  # type: () -> unicode
         return u"{0.program_id} '{1.title120}'".format(self, self.titles)
 
     def __str__(self):
@@ -131,20 +104,18 @@ class Program(object):
     def get_content_rating(self, body):
         return next((content_rating for content_rating in self.content_ratings if content_rating.body == body), None)
 
-    def get_cast(self, in_roles):
+    def get_cast(self, in_roles):  # type: (List[unicode]) -> List[ProgramCast]
         return [cast for cast in self.cast if cast.role in in_roles]
 
-    def get_crew(self, in_roles):
+    def get_crew(self, in_roles):  # type: (List[unicode]) -> List[ProgramCrew]
         return [crew for crew in self.crew if crew.role in in_roles]
 
     @staticmethod
-    def from_dict(dct):
+    def from_dict(dct):  # type: (dict) -> Program
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: Program
         """
         if "programID" not in dct or "md5" not in dct:
             return dct

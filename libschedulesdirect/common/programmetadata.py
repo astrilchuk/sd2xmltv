@@ -4,17 +4,14 @@ from seasonepisode import SeasonEpisode
 
 class ProgramMetadata(object):
     def __init__(self):
-        self.season_episode = None
-        """:type : SeasonEpisode"""
+        self.season_episode = None  # type: SeasonEpisode
 
     @classmethod
-    def from_iterable(cls, iterable):
+    def from_iterable(cls, iterable):  # type: (Iterable[dict]) -> ProgramMetadata
         """
 
         :param iterable:
-        :type iterable: collections.Iterable[dict]
         :return:
-        :rtype: ProgramMetadata
         """
         program_metadata = cls()
 

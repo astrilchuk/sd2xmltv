@@ -2,41 +2,32 @@
 
 class Device(object):
     def __init__(self):
-        self.friendly_name = None
-        """:type: unicode"""
+        self.friendly_name = None  # type: unicode
 
-        self.model_number = None
-        """:type: unicode"""
+        self.model_number = None  # type: unicode
 
-        self.firmware_name = None
-        """:type: unicode"""
+        self.firmware_name = None  # type: unicode
 
-        self.firmware_version = None
-        """:type: unicode"""
+        self.firmware_version = None  # type: unicode
 
-        self.device_id = None
-        """:type: unicode"""
+        self.device_id = None  # type: unicode
 
-        self.device_auth = None
-        """:type: unicode"""
+        self.device_auth = None  # type: unicode
 
-        self.base_url = None
-        """:type: unicode"""
+        self.base_url = None  # type: unicode
 
-        self.lineup_url = None
-        """:type: unicode"""
+        self.lineup_url = None  # type: unicode
 
-        self.lineup = None
-        """:type: Lineup"""
+        self.lineup = None  # type: Lineup
 
-    def __unicode__(self):
+    def __unicode__(self):  # type: () -> unicode
         return "Device {0.device_id} at {0.base_url}".format(self)
 
     def __str__(self):
         return unicode(self).encode("utf-8")
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> Device
         device = cls()
 
         if "FriendlyName" in dct:

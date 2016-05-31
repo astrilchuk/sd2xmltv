@@ -3,26 +3,22 @@ import logging
 
 class StationLogo(object):
     def __init__(self):
-        self.url = None
-        """:type: unicode"""
+        self.url = None  # type: unicode
 
-        self.height = None
-        """:type: int"""
+        self.height = None  # type: int
 
-        self.md5 = None
-        """:type: unicode"""
+        self.md5 = None  # type: unicode
 
-        self.width = None
-        """:type: int"""
+        self.width = None  # type: int
 
-    def __unicode__(self):
+    def __unicode__(self):  # type: () -> unicode
         return u"Station Logo {0.width}x{0.height}".format(self)
 
     def __str__(self):
         return unicode(self).encode("utf-8")
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> StationLogo
         """
 
         :param dct:

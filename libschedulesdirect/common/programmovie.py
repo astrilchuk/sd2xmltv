@@ -4,23 +4,18 @@ from qualityrating import QualityRating
 
 class ProgramMovie(object):
     def __init__(self):
-        self.duration = None
-        """:type: int"""
+        self.duration = None  # type: int
 
-        self.quality_ratings = []
-        """:type: list[QualityRating]"""
+        self.quality_ratings = []  # type: List[QualityRating]
 
-        self.year = None
-        """:type: unicode"""
+        self.year = None  # type: unicode
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> ProgramMovie
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: ProgramMovie
         """
         program_movie = cls()
 

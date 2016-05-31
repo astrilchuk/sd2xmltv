@@ -4,20 +4,16 @@ from responsestatus import ResponseStatus
 
 class Token(object):
     def __init__(self):
-        self.response_status = None
-        """:type: ResponseStatus"""
+        self.response_status = None  # type: ResponseStatus
 
-        self.token = None
-        """:type: unicode"""
+        self.token = None  # type: unicode
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> Token
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: Token
         """
         token = cls()
 

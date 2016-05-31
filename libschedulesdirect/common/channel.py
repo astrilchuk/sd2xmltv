@@ -1,56 +1,42 @@
 import logging
+from station import Station
 
 
 class Channel(object):
     def __init__(self):
         # Common
-        self.station_id = None
-        """:type: unicode"""
+        self.station_id = None  # type: unicode
 
-        self.station = None
-        """:type: Station"""
+        self.station = None  # type: Station
 
-        self.channel = None
-        """:type: unicode"""
+        self.channel = None  # type: unicode
 
         # Antenna
-        self.atsc_major = None
-        """:type: int"""
+        self.atsc_major = None  # type: int
 
-        self.atsc_minor = None
-        """:type: int"""
+        self.atsc_minor = None  # type: int
 
-        self.uhf_vhf = None
-        """:type: int"""
+        self.uhf_vhf = None  # type: int
 
         # DVB-T/C/S
 
-        self.frequency_hz = None
-        """:type: int"""
+        self.frequency_hz = None  # type: int
 
-        self.delivery_system = None
-        """:type: unicode"""
+        self.delivery_system = None  # type: unicode
 
-        self.modulation_system = None
-        """:type: unicode"""
+        self.modulation_system = None  # type: unicode
 
-        self.symbol_rate = None
-        """:type: int"""
+        self.symbol_rate = None  # type: int
 
-        self.service_id = None
-        """:type: int"""
+        self.service_id = None  # type: int
 
-        self.network_id = None
-        """:type: int"""
+        self.network_id = None  # type: int
 
-        self.transport_id = None
-        """:type: int"""
+        self.transport_id = None  # type: int
 
-        self.polarization = None
-        """:type: unicode"""
+        self.polarization = None  # type: unicode
 
-        self.fec = None
-        """:type: unicode"""
+        self.fec = None  # type: unicode
 
     def get_display_names(self):
         if self.channel is not None:
@@ -63,34 +49,30 @@ class Channel(object):
         yield self.station.callsign
         yield self.station.name
 
-    def get_unique_id(self):
-        return "I{0.channel}.{0.station_id}.schedulesdirect.org".format(self)
+    def get_unique_id(self):  # type: () -> unicode
+        return u"I{0.channel}.{0.station_id}.schedulesdirect.org".format(self)
 
-    def __unicode__(self):
+    def __unicode__(self):  # type: () -> unicode
         return u"Channel {0.channel}".format(self)
 
     def __str__(self):
         return unicode(self).encode("utf-8")
 
     @classmethod
-    def from_iterable(cls, iterable):
+    def from_iterable(cls, iterable):  # type: (Iterable[dict]) -> List[Channel]
         """
 
         :param iterable:
-        :type iterable: collections.Iterable[dict]
         :return:
-        :rtype: list[Channel]
         """
         return [cls.from_dict(channel) for channel in iterable]
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> Channel
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: Channel
         """
         channel = cls()
 

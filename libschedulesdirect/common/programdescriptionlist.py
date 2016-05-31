@@ -19,13 +19,11 @@ class ProgramDescriptionList(list):
         return next((description.text for description in self.ordered_by_text_length(True) if description.language == language), None)
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> ProgramDescriptionList
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: ProgramDescriptionList
         """
         program_description_list = cls()
 

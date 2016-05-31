@@ -11,30 +11,23 @@ import hashlib
 
 class SchedulesDirect(object):
     def __init__(self, username, password, cache_path="./sdcache.db"):
-        self._logger = logging.getLogger(__name__)
+        self._logger = logging.getLogger(__name__)  # type: logging.Logger
 
-        self._username = username
-        """:type: unicode"""
+        self._username = username  # type: unicode
 
-        self._password = hashlib.sha1(password).hexdigest()
-        """:type: unicode"""
+        self._password = hashlib.sha1(password).hexdigest()  # type: unicode
 
-        self._cache = SchedulesDirectCache(cache_path)
-        """:type: SchedulesDirectCache"""
+        self._cache = SchedulesDirectCache(cache_path)  # type: SchedulesDirectCache
 
         self._cache.init_database()
 
-        self._force_program_refresh = False
-        """:type: bool"""
+        self._force_program_refresh = False  # type: bool
 
-        self._subscribed_lineups = None
-        """:type: list[Lineup]"""
+        self._subscribed_lineups = None  # type: List[Lineup]
 
-        self._token = None
-        """:type: unicode"""
+        self._token = None  # type: unicode
 
-        self._status = None
-        """:type: Status"""
+        self._status = None  # type: Status
 
     def get_token(self):
         self._token = api.get_token(self._username, self._password)["token"]
@@ -67,11 +60,10 @@ class SchedulesDirect(object):
 
         return [Headend.from_dict(headend) for headend in headends_dict]
 
-    def get_subscribed_lineups(self):
+    def get_subscribed_lineups(self):  # type: () -> List[Lineup]
         """
 
         :return:
-        :rtype: list[Lineup]
         """
         if self._subscribed_lineups is not None:
             return self._subscribed_lineups
@@ -92,13 +84,12 @@ class SchedulesDirect(object):
         self._subscribed_lineups = None
         return ChangeLineupResponse.from_dict(response)
 
-    def get_lineup_map(self, lineup_id, modified=None):
+    def get_lineup_map(self, lineup_id, modified=None):  # type: (...) -> LineupMap
         """
 
         :param lineup_id:
         :param modified:
         :return:
-        :rtype: LineupMap
         """
         lineup_map = self._cache.get_lineup(lineup_id, modified)
 
@@ -108,12 +99,11 @@ class SchedulesDirect(object):
 
         return LineupMap.from_dict(lineup_map)
 
-    def get_lineup_map_list(self, lineups):
+    def get_lineup_map_list(self, lineups):  # type: (...) -> LineupMapList
         """
 
         :param lineups:
         :return:
-        :rtype: LineupMapList
         """
         lineup_map_list = LineupMapList()
 
@@ -201,12 +191,11 @@ class SchedulesDirect(object):
 
         return schedule_hash_list
 
-    def cache_schedules(self, schedule_hash_list):
+    def cache_schedules(self, schedule_hash_list):  # type: (...) -> ScheduleList
         """
 
         :param schedule_hash_list:
         :return:
-        :rtype: ScheduleList
         """
         self._cache.add_schedule_hashes(schedule_hash_list)
 
@@ -228,15 +217,11 @@ class SchedulesDirect(object):
 
         return ScheduleList()
 
-    def get_cached_schedules(self, schedule_keys):
+    def get_cached_schedules(self, schedule_keys):  # type: (...) -> ScheduleList
         """
 
-        :param station_ids:
-        :type station_ids: list[unicode]
-        :param schedule_dates:
-        :type schedule_dates: list[date]
+        :param schedule_keys:
         :return:
-        :rtype: ScheduleList
         """
         return ScheduleList(self._cache.get_schedules(schedule_keys))
 

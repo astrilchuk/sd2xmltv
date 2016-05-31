@@ -6,29 +6,25 @@ from schedulemetadata import ScheduleMetadata
 
 class Schedule(object):
     def __init__(self):
-        self.response_status = None
-        """:type: ResponseStatus"""
+        self.response_status = None  # type: ResponseStatus
 
-        self.station_id = None
-        """:type: unicode"""
+        self.station_id = None  # type: unicode
 
-        self.broadcasts = []
-        """:type: list[Broadcast]"""
+        self.broadcasts = []  # type: List[Broadcast]
 
-        self.metadata = None
-        """:type: ScheduleMetadata"""
+        self.metadata = None  # type: ScheduleMetadata
 
-    def get_program_ids(self):
+    def get_program_ids(self):  # type: () -> List[unicode]
         return list({broadcast.program_id for broadcast in self.broadcasts})
 
-    def __unicode__(self):
+    def __unicode__(self):  # type: () -> unicode
         return u"{1.start_date} Schedule for Station {0.station_id}".format(self, self.metadata)
 
     def __str__(self):
         return unicode(self).encode("utf-8")
 
     @staticmethod
-    def from_dict(dct):
+    def from_dict(dct):  # type: (dict) -> Schedule
         """
 
         :param dct:

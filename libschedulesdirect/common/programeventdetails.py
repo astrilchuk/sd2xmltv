@@ -1,27 +1,23 @@
 import logging
+from datetime import datetime
 from util import parse_date
 from eventteam import EventTeam
 
 
 class ProgramEventDetails(object):
     def __init__(self):
-        self.venue = None
-        """:type: unicode"""
+        self.venue = None  # type: unicode
 
-        self.game_date = None
-        """:type: datetime"""
+        self.game_date = None  # type: datetime
 
-        self.teams = []
-        """:type: list[EventTeam]"""
+        self.teams = []  # type: List[EventTeam]
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> ProgramEventDetails
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: ProgramEventDetails
         """
         ped = cls()
 

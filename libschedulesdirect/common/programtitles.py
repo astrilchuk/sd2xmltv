@@ -3,17 +3,14 @@ import logging
 
 class ProgramTitles(object):
     def __init__(self):
-        self.title120 = None
-        """:type: unicode"""
+        self.title120 = None  # type: unicode
 
     @classmethod
-    def from_iterable(cls, iterable):
+    def from_iterable(cls, iterable):  # type: (Iterable[dict]) -> ProgramTitles
         """
 
         :param iterable:
-        :type iterable: collections.Iterable[dict]
         :return:
-        :rtype: ProgramTitles
         """
         program_titles = cls()
 

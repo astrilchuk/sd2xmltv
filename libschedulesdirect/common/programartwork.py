@@ -5,20 +5,16 @@ from imagelist import ImageList
 
 class ProgramArtwork(object):
     def __init__(self):
-        self.artwork_id = None
-        """:type: unicode"""
+        self.artwork_id = None  # type: unicode
 
-        self.image_list = ImageList()
-        """:type: ImageList"""
+        self.image_list = ImageList()  # type: ImageList
 
     @staticmethod
-    def from_dict(dct):
+    def from_dict(dct):  # type: (dict) -> ProgramArtwork
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: ProgramArtwork
         """
         if "programID" not in dct:
             return dct
@@ -35,12 +31,10 @@ class ProgramArtwork(object):
         return program_artwork
 
     @classmethod
-    def from_iterable(cls, iterable):
+    def from_iterable(cls, iterable):  # type: (Iterable[dict]) -> List[ProgramArtwork]
         """
 
         :param iterable:
-        :type iterable: collections.Iterable[dict]
         :return:
-        :rtype: ProgramArtwork
         """
         return [ProgramArtwork.from_dict(item) for item in iterable]

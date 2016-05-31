@@ -3,57 +3,45 @@ import collections
 
 class Image(object):
     def __init__(self):
-        self.width = None
-        """:type: int"""
+        self.width = None  # type: int
 
-        self.height = None
-        """:type: int"""
+        self.height = None  # type: int
 
-        self.caption = None
-        """:type: dict"""
+        self.caption = None  # type: dict
 
-        self.uri = None
-        """:type: unicode"""
+        self.uri = None  # type: unicode
 
-        self.size = None
-        """:type: unicode"""
+        self.size = None  # type: unicode
 
-        self.aspect = None
-        """:type: unicode"""
+        self.aspect = None  # type: unicode
 
-        self.category = None
-        """:type: unicode"""
+        self.category = None  # type: unicode
 
-        self.text = None
-        """:type: bool"""
+        self.text = None  # type: bool
 
-        self.primary = None
-        """:type: bool"""
+        self.primary = None  # type: bool
 
-        self.tier = None
-        """:type: unicode"""
+        self.tier = None  # type: unicode
 
     @property
-    def url(self):
+    def url(self):  # type: () -> unicode
         if self.uri[0:7] == u"assets/":
             return u"https://json.schedulesdirect.org/20141201/image/" + self.uri
 
         return self.uri
 
-    def __unicode__(self):
+    def __unicode__(self):  # type: () -> unicode
         return u"{0.tier} {0.category} {0.size} {0.width}x{0.height} ({0.aspect}) {0.url}".format(self)
 
     def __str__(self):
         return unicode(self).encode("utf-8")
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> Image
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: Image
         """
         image = cls()
 
@@ -93,12 +81,10 @@ class Image(object):
         return image
 
     @classmethod
-    def from_iterable(cls, iterable):
+    def from_iterable(cls, iterable):  # type: (Iterable[dict]) -> List[Image]
         """
 
         :param iterable:
-        :type iterable: collections.Iterable[dict]
         :return:
-        :rtype: list[Image]
         """
         return [Image.from_dict(item) for item in iterable]

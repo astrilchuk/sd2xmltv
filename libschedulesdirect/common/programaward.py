@@ -3,46 +3,35 @@ import logging
 
 class ProgramAward(object):
     def __init__(self):
-        self.category = None
-        """:type: unicode"""
+        self.category = None  # type: unicode
 
-        self.award_name = None
-        """:type: unicode"""
+        self.award_name = None  # type: unicode
 
-        self.name = None
-        """:type: unicode"""
+        self.name = None  # type: unicode
 
-        self.year = None
-        """:type: unicode"""
+        self.year = None  # type: unicode
 
-        self.recipient = None
-        """:type: unicode"""
+        self.recipient = None  # type: unicode
 
-        self.won = None
-        """:type: bool"""
+        self.won = None  # type: bool
 
-        self.personId = None
-        """:type: int"""
+        self.personId = None  # type: int
 
     @classmethod
-    def from_iterable(cls, iterable):
+    def from_iterable(cls, iterable):  # type: (Iterable[dict]) -> List[ProgramAward]
         """
 
         :param iterable:
-        :type iterable: collections.Iterable[dict]
         :return:
-        :rtype: list[ProgramAward]
         """
         return [cls.from_dict(program_award) for program_award in iterable]
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> ProgramAward
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: ProgramAward
         """
         program_award = cls()
 

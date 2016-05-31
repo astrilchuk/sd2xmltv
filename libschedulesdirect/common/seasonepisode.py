@@ -3,26 +3,20 @@ import logging
 
 class SeasonEpisode(object):
     def __init__(self):
-        self.season = None
-        """:type: int"""
+        self.season = None  # type: int
 
-        self.episode = None
-        """:type: int"""
+        self.episode = None  # type: int
 
-        self.total_episodes = None
-        """:type: int"""
+        self.total_episodes = None  # type: int
 
-        self.total_seasons = None
-        """:type: int"""
+        self.total_seasons = None  # type: int
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> SeasonEpisode
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: SeasonEpisode
         """
         season_episode = cls()
 

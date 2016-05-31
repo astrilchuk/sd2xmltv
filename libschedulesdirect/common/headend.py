@@ -4,32 +4,26 @@ from lineup import Lineup
 
 class Headend(object):
     def __init__(self):
-        self.headend_id = None
-        """:type: unicode"""
+        self.headend_id = None  # type: unicode
 
-        self.transport = None
-        """:type: unicode"""
+        self.transport = None  # type: unicode
 
-        self.location = None
-        """:type: unicode"""
+        self.location = None  # type: unicode
 
-        self.lineups = []
-        """:type: list[Lineup]"""
+        self.lineups = []  # type: List[Lineup]
 
-    def __unicode__(self):
+    def __unicode__(self):  # type: () -> unicode
         return u"{0.headend_id} / {0.transport} / {0.location}".format(self)
 
     def __str__(self):
         return unicode(self).encode("utf-8")
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> Headend
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: Headend
         """
         headend = cls()
 

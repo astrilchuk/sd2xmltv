@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from util import parse_datetime
 from lineup import Lineup
 from statusaccount import StatusAccount
@@ -7,35 +8,26 @@ from statussystem import StatusSystem
 
 class Status(object):
     def __init__(self):
-        self.account = None
-        """:type: StatusAccount"""
+        self.account = None  # type: StatusAccount
 
-        self.lineups = []
-        """:type: list[Lineup]"""
+        self.lineups = []  # type: List[Lineup]
 
-        self.last_data_update = None
-        """:type: datetime"""
+        self.last_data_update = None  # type: datetime
 
-        self.notifications = []
-        """:type: list[unicode]"""
+        self.notifications = []  # type: List[unicode]
 
-        self.system_status = None
-        """:type: StatusSystem"""
+        self.system_status = None  # type: StatusSystem
 
-        self.server_id = None
-        """:type: unicode"""
+        self.server_id = None  # type: unicode
 
-        self.code = None
-        """:type: int"""
+        self.code = None  # type: int
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> Status
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: Status
         """
         status = cls()
 

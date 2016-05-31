@@ -3,37 +3,31 @@ import logging
 
 class ProgramContentRating(object):
     def __init__(self):
-        self.body = None
-        """:type: unicode"""
+        self.body = None  # type: unicode
 
-        self.code = None
-        """:type: unicode"""
+        self.code = None  # type: unicode
 
-    def __unicode__(self):
+    def __unicode__(self):  # type: () -> unicode
         return u"{0.body}: {0.code}".format(self)
 
     def __str__(self):
         return unicode(self).encode("utf-8")
 
     @classmethod
-    def from_iterable(cls, iterable):
+    def from_iterable(cls, iterable):  # type: Iterable[dict] -> List[ProgramContentRating]
         """
 
         :param iterable:
-        :type iterable: collections.Iterable[dict]
         :return:
-        :rtype: list[ProgramContentRating]
         """
         return [cls.from_dict(content_rating) for content_rating in iterable]
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> ProgramContentRating
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: ProgramContentRating
         """
         program_content_rating = cls()
 

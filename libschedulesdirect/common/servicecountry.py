@@ -3,29 +3,22 @@ import logging
 
 class ServiceCountry(object):
     def __init__(self):
-        self.full_name = None
-        """:type: unicode"""
+        self.full_name = None  # type: unicode
 
-        self.short_name = None
-        """:type: unicode"""
+        self.short_name = None  # type: unicode
 
-        self.postal_code_example = None
-        """:type: unicode"""
+        self.postal_code_example = None  # type: unicode
 
-        self.postal_code_regex = None
-        """:type: unicode"""
+        self.postal_code_regex = None  # type: unicode
 
-        self.one_postal_code = False
-        """:type: bool"""
+        self.one_postal_code = False  # type: bool
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> ServiceCountry
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: ServiceCountry
         """
         service_country = cls()
 

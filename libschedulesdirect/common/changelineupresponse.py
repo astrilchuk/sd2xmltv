@@ -4,26 +4,22 @@ from responsestatus import ResponseStatus
 
 class ChangeLineupResponse(object):
     def __init__(self):
-        self.response_status = None
-        """:type: ResponseStatus"""
+        self.response_status = None  # type: ResponseStatus
 
-        self.changes_remaining = None
-        """:type: int"""
+        self.changes_remaining = None  # type: int
 
-    def __unicode__(self):
+    def __unicode__(self):  # type: () -> unicode
         return self.response_status.message
 
     def __str__(self):
         return unicode(self).encode("utf-8")
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> ChangeLineupResponse
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: ChangeLineupResponse
         """
         change_lineup_response = cls()
 

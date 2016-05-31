@@ -3,31 +3,25 @@ import logging
 
 class ProgramRecommendation(object):
     def __init__(self):
-        self.program_id = None
-        """:type: unicode"""
+        self.program_id = None  # type: unicode
 
-        self.title120 = None
-        """:type: unicode"""
+        self.title120 = None  # type: unicode
 
     @classmethod
-    def from_iterable(cls, iterable):
+    def from_iterable(cls, iterable):  # type: (Iterable[dict]) -> List[ProgramRecommendation]
         """
 
         :param iterable:
-        :type iterable: collections.Iterable[dict]
         :return:
-        :rtype: ProgramRecommendation
         """
         return [cls.from_dict(recommendation) for recommendation in iterable]
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> ProgramRecommendation
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: ProgramRecommendation
         """
         program_recommendation = cls()
 

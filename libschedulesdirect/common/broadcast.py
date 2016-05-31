@@ -1,145 +1,116 @@
 import logging
+from collections import Iterable
 from datetime import datetime, timedelta
 from util import parse_datetime
+from programcontentrating import ProgramContentRating
 from multipartbroadcast import MultipartBroadcast
 
 
 class Broadcast(object):
     def __init__(self):
-        self.program_id = None
-        """:type: unicode"""
+        self.program_id = None  # type: unicode
 
-        self.md5 = None
-        """:type: unicode"""
+        self.md5 = None  # type: unicode
 
-        self.air_date_time = None
-        """:type: datetime"""
+        self.air_date_time = None  # type: datetime
 
-        self.duration = None
-        """:type: int"""
+        self.duration = None  # type: int
 
         # is this showing Live, or Tape Delayed?. Possible values: "Live", "Tape", "Delay".
-        self.live_tape_delay = None
-        """:type: unicode"""
+        self.live_tape_delay = None  # type: unicode
 
         # Values are: "Season Premiere", "Season Finale", "Series Premiere", "Series Finale"
-        self.is_premiere_or_finale = None
-        """:type: unicode"""
+        self.is_premiere_or_finale = None  # type: unicode
 
         # is this showing new?
-        self.is_new = False
-        """:type: bool"""
+        self.is_new = False  # type: bool
 
-        self.is_cable_in_the_classroom = False
-        """:type: bool"""
+        self.is_cable_in_the_classroom = False  # type: bool
 
         # typically only found outside of North America
-        self.is_catchup = False
-        """:type: bool"""
+        self.is_catchup = False  # type: bool
 
         # typically only found outside of North America
-        self.is_continued = False
-        """:type: bool"""
+        self.is_continued = False  # type: bool
 
-        self.is_educational = False
-        """:type: bool"""
+        self.is_educational = False  # type: bool
 
-        self.is_joined_in_progress = False
-        """:type: bool"""
+        self.is_joined_in_progress = False  # type: bool
 
-        self.is_left_in_progress = False
-        """:type: bool"""
+        self.is_left_in_progress = False  # type: bool
 
         # Should only be found in Miniseries and Movie program types.
-        self.is_premiere = False
-        """:type: bool"""
+        self.is_premiere = False  # type: bool
 
         # Program stops and will restart later (frequently followed by a continued).
         # Typically only found outside of North America.
-        self.is_program_break = False
-        """:type: bool"""
+        self.is_program_break = False  # type: bool
 
         # An encore presentation. Repeat should only be found on a second telecast of sporting events.
-        self.is_repeat = False
-        """:type: bool"""
+        self.is_repeat = False  # type: bool
 
         # Program has an on-screen person providing sign-language translation.
-        self.is_signed = False
-        """:type: bool"""
+        self.is_signed = False  # type: bool
 
-        self.is_subject_to_blackout = False
-        """:type: bool"""
+        self.is_subject_to_blackout = False  # type: bool
 
-        self.is_time_approximate = False
-        """:type: bool"""
+        self.is_time_approximate = False  # type: bool
 
-        self.audio_properties = []
-        """:type: list[unicode]"""
+        self.audio_properties = []  # type: List[unicode]
 
-        self.video_properties = []
-        """:type: list[unicode]"""
+        self.video_properties = []  # type: List[unicode]
 
         self.syndication = None
 
-        self.multipart = None
-        """:type: MultipartBroadcast"""
+        self.multipart = None  # type: MultipartBroadcast
 
-        self.ratings = []
+        self.ratings = []  # type: List[ProgramContentRating]
 
-        self.parental_advisory = False
-        """:type: bool"""
+        self.parental_advisory = False  # type: bool
 
     @property
-    def is_live(self):
-        """:rtype: bool"""
+    def is_live(self):  # type: () -> bool
         if self.live_tape_delay is None:
             return None
         return self.live_tape_delay == u"Live"
 
     @property
-    def is_tape(self):
-        """:rtype: bool"""
+    def is_tape(self):  # type: () -> bool
         if self.live_tape_delay is None:
             return None
         return self.live_tape_delay == u"Tape"
 
     @property
-    def is_delay(self):
-        """:rtype: bool"""
+    def is_delay(self):  # type: () -> bool
         if self.live_tape_delay is None:
             return None
         return self.live_tape_delay == u"Delay"
 
     @property
-    def end_date_time(self):
-        """:rtype: datetime"""
+    def end_date_time(self):  # type: () -> datetime
         return self.air_date_time + timedelta(seconds=self.duration)
 
-    def __unicode__(self):
+    def __unicode__(self):  # type: () -> unicode
         return u"Broadcast of {0.program_id} at {0.air_date_time}".format(self)
 
     def __str__(self):
         return unicode(self).encode("utf-8")
 
     @classmethod
-    def from_iterable(cls, iterable):
+    def from_iterable(cls, iterable):  # type: (Iterable[dict]) -> List[Broadcast]
         """
 
         :param iterable:
-        :type iterable: collections.Iterable[dict]
         :return:
-        :rtype: list[Broadcast]
         """
         return [cls.from_dict(broadcast) for broadcast in iterable]
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> Broadcast
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: Broadcast
         """
         broadcast = cls()
 
@@ -209,7 +180,7 @@ class Broadcast(object):
             broadcast.multipart = MultipartBroadcast.from_dict(dct.pop("multipart"))
 
         if "ratings" in dct:
-            broadcast.ratings = dct.pop("ratings")
+            broadcast.ratings = ProgramContentRating.from_iterable(dct.pop("ratings"))
 
         if "parentalAdvisory" in dct:
             broadcast.parental_advisory = dct.pop("parentalAdvisory")

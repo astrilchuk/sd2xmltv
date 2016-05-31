@@ -38,18 +38,15 @@ class ScheduleList(list):
     def filter_schedule_date(self, schedule_date):
         return ScheduleList(schedule for schedule in self if schedule.schedule_date == schedule_date)
 
-    def get_schedule(self, station_id, schedule_date):
+    def get_schedule(self, station_id, schedule_date):  # type: (unicode, date) -> Schedule
         """
 
         :param station_id:
-        :type station_id: unicode
         :param schedule_date:
-        :type schedule_date: date
         :return:
-        :rtype: Schedule
         """
         return next((schedule for schedule in self if schedule.station_id == station_id and schedule.metadata.start_date == schedule_date), None)
 
     @staticmethod
-    def from_iterable(iterable):
+    def from_iterable(iterable):  # type: (Iterable[dict]) -> ScheduleList
         return ScheduleList([Schedule.from_dict(item) for item in iterable])

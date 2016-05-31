@@ -17,12 +17,10 @@ class ScheduleHashList(list):
         return [(item.station_id, item.schedule_date, item.md5) for item in self]
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> ScheduleHashList
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: ScheduleHashList
         """
         return cls([ScheduleHash.from_dict(dct[station_id][schedule_date], station_id, parse_date(schedule_date)) for station_id in dct for schedule_date in dct[station_id]])

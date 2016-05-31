@@ -8,23 +8,17 @@ class HDHomeRunClient(object):
     def __init__(self, ip_list=[]):
         self._logger = logging.getLogger(__name__)
 
-        self._public_discovery_url = "http://ipv4.my.hdhomerun.com/discover"
-        """:type: unicode"""
+        self._public_discovery_url = "http://ipv4.my.hdhomerun.com/discover"  # type: unicode
 
-        self._local_discovery_url = "http://%s/discover.json"
-        """:type: unicode"""
+        self._local_discovery_url = "http://%s/discover.json"  # type: unicode
 
-        self._local_lineup_url = "http://%s/lineup.json"
-        """:type: unicode"""
+        self._local_lineup_url = "http://%s/lineup.json"  # type: unicode
 
-        self._discovered_device_list = None
-        """:type: list[DiscoveredDevice]"""
+        self._discovered_device_list = None  # type: List[DiscoveredDevice]
 
-        self._device_list = None
-        """:type: list[Device]"""
+        self._device_list = None  # type: List[Device]
 
-        self._ip_list = []
-        """:type: list[unicode]"""
+        self._ip_list = []  # type: List[unicode]
 
         if ip_list is unicode:
             self._ip_list = [ip_list]
@@ -80,38 +74,34 @@ class HDHomeRunClient(object):
                 channel_list.add(channel.guide_number)
         return channel_list
 
-    def get_lineup_from_discovered_device(self, discovered_device):
+    def get_lineup_from_discovered_device(self, discovered_device):  # type: (DiscoveredDevice) -> Lineup
         """
 
         :param discovered_device:
-        :type discovered_device: DiscoveredDevice
         :return:
         """
         return self.get_lineup_from_lineup_url(discovered_device.lineup_url)
 
-    def get_lineup_from_device(self, device):
+    def get_lineup_from_device(self, device):  # type: (Device) -> Lineup
         """
 
         :param device:
-        :type device: Device
         :return:
         """
         return self.get_lineup_from_lineup_url(device.lineup_url)
 
-    def get_lineup_from_ip(self, ip):
+    def get_lineup_from_ip(self, ip):  # type: (unicode) -> Lineup
         """
 
         :param ip:
-        :type ip: unicode
         :return:
         """
         return self.get_lineup_from_lineup_url(self._local_lineup_url % (ip,))
 
-    def get_lineup_from_lineup_url(self, url):
+    def get_lineup_from_lineup_url(self, url):  # type: (unicode) -> Lineup
         """
 
         :param url:
-        :type url: unicode
         :return:
         """
         response = urllib2.urlopen(url)
@@ -122,29 +112,26 @@ class HDHomeRunClient(object):
 
         return Lineup.from_iterable(json.loads(json_text))
 
-    def get_device_from_ip(self, ip):
+    def get_device_from_ip(self, ip):  # type: (unicode) -> Device
         """
 
         :param ip:
-        :type ip: unicode
         :return:
         """
         return self.get_device_from_url(self._local_discovery_url % (ip,))
 
-    def get_device_from_discovered_device(self, device):
+    def get_device_from_discovered_device(self, discovered_device):  # type: (DiscoveredDevice) -> Device
         """
 
         :param device:
-        :type device: DiscoveredDevice
         :return:
         """
-        return self.get_device_from_url(device.discover_url)
+        return self.get_device_from_url(discovered_device.discover_url)
 
-    def get_device_from_url(self, url):
+    def get_device_from_url(self, url):  # type: (unicode) -> Device
         """
 
         :param url:
-        :type url: unicode
         :return:
         """
         response = urllib2.urlopen(url)
@@ -155,7 +142,7 @@ class HDHomeRunClient(object):
 
         return Device.from_dict(json.loads(json_text))
 
-    def discover_devices(self):
+    def discover_devices(self):  # type: () -> DiscoveredDeviceList
         """
 
         :return:

@@ -3,14 +3,12 @@ import logging
 
 class EventTeam(object):
     def __init__(self):
-        self.name = None
-        """:type: unicode"""
+        self.name = None  # type: unicode
 
-        self.is_home = False
-        """:type: bool"""
+        self.is_home = False  # type: bool
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> EventTeam
         """
 
         :param dct:

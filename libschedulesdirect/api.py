@@ -18,31 +18,28 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARN)
 
 
-def get_token(username, password_hash):
+def get_token(username, password_hash):  # type: (unicode, unicode) -> Any
     """
 
     :param username:
-    :type username: unicode
     :param password_hash:
-    :type password_hash: unicode
     :return:
     """
     logger.debug("get_token()")
     return _post("token", post_data={"username": username, "password": password_hash})
 
 
-def get_status(token):
+def get_status(token):  # type: (unicode) -> Any
     """
 
     :param token:
-    :type token: unicode
     :return:
     """
     logger.debug("get_status()")
     return _get("status", token)
 
 
-def get_available_services():
+def get_available_services():  # type: () -> Any
     """
 
     :return:
@@ -51,7 +48,7 @@ def get_available_services():
     return _get("available")
 
 
-def get_service_countries():
+def get_service_countries():  # type: () -> Any
     """
 
     :return:
@@ -60,15 +57,12 @@ def get_service_countries():
     return _get("available/countries")
 
 
-def get_headends_by_postal_code(token, country, postal_code):
+def get_headends_by_postal_code(token, country, postal_code):  # type: (unicode, unicode, unicode) -> Any
     """
 
     :param token:
-    :type token: unicode
     :param country:
-    :type country: unicode
     :param postal_code:
-    :type postal_code: unicode
     :return:
     """
     logger.debug("get_headends_by_postal_code('%s', '%s')", country, postal_code)
@@ -76,11 +70,10 @@ def get_headends_by_postal_code(token, country, postal_code):
     return _get(uri, token)
 
 
-def get_subscribed_lineups(token):
+def get_subscribed_lineups(token):  # type: (unicode) -> Any
     """
 
     :param token:
-    :type token: unicode
     :return:
     """
     logger.debug("get_lineups()")
@@ -91,13 +84,11 @@ def get_subscribed_lineups(token):
     return lineups
 
 
-def add_lineup(token, lineup_id):
+def add_lineup(token, lineup_id):  # type: (unicode, unicode) -> Any
     """
 
     :param token:
-    :type token: unicode
     :param lineup_id:
-    :type lineup_id: unicode
     :return:
     """
     logger.debug("add_lineup('%s')", lineup_id)
@@ -105,13 +96,11 @@ def add_lineup(token, lineup_id):
     return _put(uri, token)
 
 
-def remove_lineup(token, lineup_id):
+def remove_lineup(token, lineup_id):  # type: (unicode, unicode) -> Any
     """
 
     :param token:
-    :type token: unicode
     :param lineup_id:
-    :type lineup_id: unicode
     :return:
     """
     logger.debug("remove_lineup('%s')", lineup_id)
@@ -119,13 +108,11 @@ def remove_lineup(token, lineup_id):
     return _delete(uri, token)
 
 
-def get_lineup(token, lineup_id):
+def get_lineup(token, lineup_id):  # type: (unicode, unicode) -> Any
     """
 
     :param token:
-    :type token: unicode
     :param lineup_id:
-    :type lineup_id: unicode
     :return:
     """
     logger.debug("get_lineup('%s')", lineup_id)
@@ -133,81 +120,73 @@ def get_lineup(token, lineup_id):
     return _get(uri, token)
 
 
-def get_schedule_md5s(token, stations):
+def get_schedule_md5s(token, stations):  # type: (unicode, List[dict]) -> Any
     """
 
     :param token:
-    :type token: unicode
     :param stations:
-    :type stations: list[dict]
     :return:
     """
     logger.debug("get_schedule_md5s(%s)", stations)
     return _post("schedules/md5", token, stations)
 
 
-def get_schedules(token, stations):
+def get_schedules(token, stations):  # type: (unicode, List[dict]) -> Any
     """
 
     :param token:
-    :type token: unicode
     :param stations:
-    :type stations: list[dict]
     :return:
     """
     logger.debug("get_schedules(%s)", stations)
     return _post("schedules", token, stations)
 
 
-def get_programs(token, program_ids):
+def get_programs(token, program_ids):  # type: (unicode, List[unicode]) -> Any
     """
 
     :param token:
-    :type token: unicode
     :param program_ids:
-    :type program_ids: list[unicode]
     :return:
     """
     logger.debug("get_programs(%s)", program_ids)
     return _post("programs", token, program_ids)
 
 
-def get_metadata(program_ids):
+def get_metadata(program_ids):  # type: (List[unicode]) -> Any
     logger.debug("get_metadata(%s)", program_ids)
     return _post("metadata/programs", post_data=program_ids)
 
 
-def _get(uri, token=None):
-    request = _get_request("GET", uri, token)
+def _get(uri, token=None):  # type: (unicode, Optional[unicode]) -> Any
+    request = _get_request(u"GET", uri, token)
     response = _get_response(request)
     return response
 
 
-def _post(uri, token=None, post_data=None):
-    request = _get_request("POST", uri, token, post_data)
+def _post(uri, token=None, post_data=None):  # type: (unicode, Optional[unicode], Any) -> Any
+    request = _get_request(u"POST", uri, token, post_data)
     response = _get_response(request)
     return response
 
 
-def _put(uri, token=None, post_data=None):
-    request = _get_request("PUT", uri, token, post_data)
+def _put(uri, token=None, post_data=None):  # type: (unicode, Optional[unicode], Any) -> Any
+    request = _get_request(u"PUT", uri, token, post_data)
     response = _get_response(request)
     return response
 
 
-def _delete(uri, token=None, post_data=None):
-    request = _get_request("DELETE", uri, token, post_data)
+def _delete(uri, token=None, post_data=None):  # type: (unicode, Optional[unicode], Any) -> Any
+    request = _get_request(u"DELETE", uri, token, post_data)
     response = _get_response(request)
     return response
 
 
-def _get_request(method, uri, token=None, post_data=None):
+def _get_request(method, uri, token=None, post_data=None):  # type: (unicode, unicode, Optional[unicode], Any) -> Any
     """
 
     :param method:
-    :type method: str
     :param uri:
-    :type uri: str
     :param post_data:
     :return:
     """
@@ -228,15 +207,12 @@ def _get_request(method, uri, token=None, post_data=None):
     return request
 
 
-def _get_token_request(token, method, uri, data=None):
+def _get_token_request(token, method, uri, data=None):  # type: (unicode, unicode, unicode, Any) -> Any
     """
 
     :param token:
-    :type token: unicode
     :param method:
-    :type method: str
     :param uri:
-    :type uri: str
     :param data:
     :return:
     """
@@ -246,7 +222,7 @@ def _get_token_request(token, method, uri, data=None):
     return request
 
 
-def _get_response(request):
+def _get_response(request):  # type: (Any) -> Any
     logger.debug("_get_response()")
 
     if logger.isEnabledFor(logging.DEBUG):

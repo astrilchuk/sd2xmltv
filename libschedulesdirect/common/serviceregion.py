@@ -4,11 +4,9 @@ from servicecountry import ServiceCountry
 
 class ServiceRegion(object):
     def __init__(self):
-        self.name = None
-        """:type: unicode"""
+        self.name = None  # type: unicode
 
-        self.service_countries = []
-        """:type: list[ServiceCountry]"""
+        self.service_countries = []  # type: List[ServiceCountry]
 
     @classmethod
     def from_dict(cls, name, dct):

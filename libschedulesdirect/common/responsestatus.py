@@ -1,32 +1,26 @@
 import logging
+from datetime import datetime
 from util import parse_datetime
 
 
 class ResponseStatus(object):
     def __init__(self):
-        self.code = None
-        """:type: int"""
+        self.code = None  # type: int
 
-        self.response = None
-        """:type: unicode"""
+        self.response = None  # type: unicode
 
-        self.message = None
-        """:type: unicode"""
+        self.message = None  # type: unicode
 
-        self.server_id = None
-        """:type: unicode"""
+        self.server_id = None  # type: unicode
 
-        self.date_time = None
-        """:type: datetime"""
+        self.date_time = None  # type: datetime
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> ResponseStatus
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: ResponseStatus
         """
         response_status = cls()
 

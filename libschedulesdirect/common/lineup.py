@@ -1,55 +1,45 @@
 import logging
+from datetime import datetime
 from util import parse_datetime
 
 
 class Lineup(object):
     def __init__(self):
-        self.lineup_id = None
-        """:type: unicode"""
+        self.lineup_id = None  # type: unicode
 
-        self.name = None
-        """:type: unicode"""
+        self.name = None  # type: unicode
 
-        self.transport = None
-        """:type: unicode"""
+        self.transport = None  # type: unicode
 
-        self.location = None
-        """:type: unicode"""
+        self.location = None  # type: unicode
 
-        self.modified = None
-        """:type: datetime"""
+        self.modified = None  # type: datetime
 
-        self.uri = None
-        """:type: unicode"""
+        self.uri = None  # type: unicode
 
-        self.is_deleted = False
-        """:type: bool"""
+        self.is_deleted = False  # type: bool
 
-    def __unicode__(self):
+    def __unicode__(self):  # type: () -> unicode
         return self.lineup_id
 
     def __str__(self):
         return unicode(self).encode("utf-8")
 
     @classmethod
-    def from_iterable(cls, iterable):
+    def from_iterable(cls, iterable):  # type: Iterable[dict] -> List[Lineup]
         """
 
         :param iterable:
-        :type iterable: collections.Iterable[dict]
         :return:
-        :rtype: list[Lineup]
         """
         return [cls.from_dict(lineup) for lineup in iterable]
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> Lineup
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: Lineup
         """
         lineup = cls()
 

@@ -1,23 +1,20 @@
 import logging
+from datetime import datetime
 from util import parse_datetime
 
 
 class StatusSystem(object):
     def __init__(self):
-        self.date = None
-        """:type: datetime"""
+        self.date = None  # type: datetime
 
-        self.details = None
-        """:type: unicode"""
+        self.details = None  # type: unicode
 
-        self.status = None
-        """:type: unicode"""
+        self.status = None  # type: unicode
 
-        self.message = None
-        """:type: unicode"""
+        self.message = None  # type: unicode
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> StatusSystem
         """
 
         :param dct:

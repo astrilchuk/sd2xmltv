@@ -3,20 +3,16 @@ import logging
 
 class MultipartBroadcast(object):
     def __init__(self):
-        self.part_number = None
-        """:type: int"""
+        self.part_number = None  # type: int
 
-        self.total_parts = None
-        """:type: int"""
+        self.total_parts = None  # type: int
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> MultipartBroadcast
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: MultipartBroadcast
         """
         multipart_broadcast = cls()
 

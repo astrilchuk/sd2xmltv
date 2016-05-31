@@ -20,7 +20,7 @@ class ImageList(list):
         return ImageList(artwork for tier in tiers for artwork in self if (tier is None and artwork.tier is None) or artwork.tier == tier)
 
     @classmethod
-    def from_iterable(cls, iterable):
+    def from_iterable(cls, iterable):  # type: (Iterable[dict]) -> ImageList
         """
 
         :param iterable:

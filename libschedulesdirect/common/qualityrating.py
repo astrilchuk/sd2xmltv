@@ -3,22 +3,17 @@ import logging
 
 class QualityRating(object):
     def __init__(self):
-        self.increment = None
-        """:type: unicode"""
+        self.increment = None  # type: unicode
 
-        self.max_rating = None
-        """:type: unicode"""
+        self.max_rating = None  # type: unicode
 
-        self.min_rating = None
-        """:type: unicode"""
+        self.min_rating = None  # type: unicode
 
-        self.rating = None
-        """:type: unicode"""
+        self.rating = None  # type: unicode
 
-        self.ratings_body = None
-        """:type: unicode"""
+        self.ratings_body = None  # type: unicode
 
-    def get_stars(self):
+    def get_stars(self):  # type: () -> unicode
         rating_float = float(self.rating)
         rating_int = int(rating_float)
         stars_str = u"*" * rating_int  # unichr(0x2606) * rating_int
@@ -27,24 +22,20 @@ class QualityRating(object):
         return stars_str
 
     @classmethod
-    def from_iterable(cls, iterable):
+    def from_iterable(cls, iterable):  # type: (Iterable[dict]) -> List[QualityRating]
         """
 
         :param iterable:
-        :type iterable: collections.Iterable[dict]
         :return:
-        :rtype: list[QualityRating]
         """
         return [QualityRating.from_dict(quality_rating) for quality_rating in iterable]
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> QualityRating
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: QualityRating
         """
         quality_rating = cls()
 

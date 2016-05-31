@@ -3,35 +3,26 @@ import logging
 
 class ProgramKeywords(object):
     def __init__(self):
-        self.mood = None
-        """:type: list[unicode]"""
+        self.mood = None  # type: unicode
 
-        self.time_period = None
-        """:type: list[unicode]"""
+        self.time_period = None  # type: unicode
 
-        self.character = None
-        """:type: list[unicode]"""
+        self.character = None  # type: unicode
 
-        self.theme = None
-        """:type: list[unicode]"""
+        self.theme = None  # type: unicode
 
-        self.setting = None
-        """:type: list[unicode]"""
+        self.setting = None  # type: unicode
 
-        self.subject = None
-        """:type: list[unicode]"""
+        self.subject = None  # type: unicode
 
-        self.general = None
-        """:type: list[unicode]"""
+        self.general = None  # type: unicode
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: dict[dict] -> ProgramKeywords
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: ProgramKeywords
         """
         program_keywords = cls()
 

@@ -1,26 +1,22 @@
 import logging
+from datetime import datetime
 from util import parse_datetime
 
 
 class StatusAccount(object):
     def __init__(self):
-        self.expires = None
-        """:type: datetime"""
+        self.expires = None  # type: datetime
 
-        self.messages = None
-        """:type: list[unicode]"""
+        self.messages = None  # type: List[unicode]
 
-        self.max_lineups = None
-        """:type: int"""
+        self.max_lineups = None  # type: int
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct):  # type: (dict) -> StatusAccount
         """
 
         :param dct:
-        :type dct: dict
         :return:
-        :rtype: StatusAccount
         """
         status_account = cls()
 
