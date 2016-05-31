@@ -2,7 +2,7 @@
 # coding=utf-8
 
 import logging
-from xmltv.common import XmltvChannel, XmltvProgramme
+from xmltv import XmltvChannel, XmltvProgramme
 from libschedulesdirect.common import Program, Broadcast, Channel, ProgramArtwork
 from libschedulesdirect.schedulesdirect import SchedulesDirect
 from optparse import OptionParser
@@ -306,10 +306,10 @@ class Sd2Xmltv:
 
         if program_artwork is not None:
             # "Banner-L2", "Banner-L3", "Iconic", "Staple"
-            artwork_album = program_artwork.artwork_album.aspect_preference(u"3x4", u"4x3", u"2x3", u"16x9").size_preference(u"Md").category_preference(u"Poster Art", u"Box Art", u"Banner", u"Banner-L1", u"Banner-LO", u"Banner-L2", u"Logo").tier_preference(u"Series", u"Season", u"Sport", u"Team", u"Organization", u"College", None)
-            artwork = artwork_album[0] if artwork_album else None
-            if artwork is not None:
-                p.add_icon(artwork.url)
+            image_list = program_artwork.image_list.aspect_preference(u"3x4", u"4x3", u"2x3", u"16x9").size_preference(u"Md").category_preference(u"Poster Art", u"Box Art", u"Banner", u"Banner-L1", u"Banner-LO", u"Banner-L2", u"Logo").tier_preference(u"Series", u"Season", u"Sport", u"Team", u"Organization", u"College", None)
+            image = image_list[0] if image_list else None
+            if image is not None:
+                p.add_icon(image.url)
 
         p.save(fp, encoding=self._encoding)
 
@@ -364,6 +364,5 @@ def main():
         app.process()
 
 if __name__ == "__main__":
-    logging.basicConfig(format=u"%(asctime)s %(name)-35s %(levelname)-8s %(message)s", level=logging.INFO)
+    logging.basicConfig(format=u"%(asctime)s %(name)-35s %(levelname)-8s %(message)s", level=logging.DEBUG)
     main()
-

@@ -4,7 +4,7 @@
 import api
 from . import batched, parse_datetime, parse_date
 from cache import SchedulesDirectCache
-from common import Status, LineupMap, LineupMapList, Program, ScheduleList, Schedule, Headend, Lineup, ChangeLineupResponse, ProgramArtwork
+from common import Status, LineupMap, LineupMapList, ScheduleList, Headend, Lineup, ChangeLineupResponse, ServiceRegion
 import logging
 import hashlib
 
@@ -45,6 +45,15 @@ class SchedulesDirect(object):
 
     def is_online(self):
         return self._status.system_status.status == u"Online"
+
+    def get_service_countries(self):
+        """
+
+        :return:
+        """
+        service_region_dict = api.get_service_countries()
+
+        return [ServiceRegion.from_dict(service_region) for service_region in service_region_dict]
 
     def get_headends_by_postal_code(self, country, postal_code):
         """

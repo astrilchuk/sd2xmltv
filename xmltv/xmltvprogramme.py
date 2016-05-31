@@ -1,41 +1,7 @@
-#!/usr/bin/python
-# coding=utf-8
-
+import logging
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element, SubElement
-import logging
-
-
-class XmltvDocument(object):
-    def __init__(self):
-        self._logger = logging.getLogger(__name__)
-        self.root = Element(u"tv")
-
-    def add_channel(self, xmltv_channel):
-        self.root.append(xmltv_channel.root)
-
-    def add_programme(self, xmltv_programme):
-        self.root.append(xmltv_programme.root)
-
-    def has_channel(self, channel_id):
-        return self.root.find("./channel[@channel=\"{0}\"]".format(channel_id)) is not None
-
-    def save(self, path, encoding=u"utf-8"):
-        indent(self.root)
-        ET.ElementTree(self.root).write(path, encoding=encoding, xml_declaration=True)
-
-
-class XmltvChannel(object):
-    def __init__(self, channel_id):
-        self._logger = logging.getLogger(__name__)
-        self.root = Element(u"channel", {u"id": channel_id})
-
-    def add_display_name(self, display_name):
-        SubElement(self.root, u"display-name").text = display_name
-
-    def save(self, fp, encoding=u"utf-8"):
-        indent(self.root)
-        ET.ElementTree(self.root).write(fp, encoding=encoding)
+from . import indent
 
 
 class XmltvProgramme(object):
@@ -166,25 +132,3 @@ class XmltvProgramme(object):
     def save(self, fp, encoding=u"utf-8"):
         indent(self.root)
         ET.ElementTree(self.root).write(fp, encoding=encoding)
-
-
-def indent(elem, level=0):
-    """
-    http://stackoverflow.com/questions/749796/pretty-printing-xml-in-python
-    :param elem:
-    :param level:
-    :return:
-    """
-    i = u"\n" + level * u" "
-    if len(elem):
-        if not elem.text or not elem.text.strip():
-            elem.text = i + u" "
-        if not elem.tail or not elem.tail.strip():
-            elem.tail = i
-        for elem in elem:
-            indent(elem, level+1)
-        if not elem.tail or not elem.tail.strip():
-            elem.tail = i
-    else:
-        if level and (not elem.tail or not elem.tail.strip()):
-            elem.tail = i

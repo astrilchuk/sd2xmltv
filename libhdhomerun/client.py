@@ -46,7 +46,7 @@ class HDHomeRunClient(object):
                 self._logger.error("No devices reported by my.hdhomerun.com.")
                 return False
             else:
-                self._logger.info("my.hdhomerun.com reports {0} devices on your network.".format(len(self._discovered_device_list)))
+                self._logger.info("my.hdhomerun.com reports {0} device(s) on your network.".format(len(self._discovered_device_list)))
 
             for discovered_device in self._discovered_device_list:
                 self._logger.info("Getting info for device {0.device_id} at {0.local_ip}...".format(discovered_device))
