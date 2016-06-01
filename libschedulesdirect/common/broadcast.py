@@ -60,8 +60,6 @@ class Broadcast(object):
 
         self.video_properties = []  # type: List[unicode]
 
-        self.syndication = None
-
         self.multipart = None  # type: MultipartBroadcast
 
         self.ratings = []  # type: List[ProgramContentRating]
@@ -172,9 +170,6 @@ class Broadcast(object):
 
         if "videoProperties" in dct:
             broadcast.video_properties = dct.pop("videoProperties")
-
-        if "syndication" in dct:
-            broadcast.syndication = dct.pop("syndication")
 
         if "multipart" in dct:
             broadcast.multipart = MultipartBroadcast.from_dict(dct.pop("multipart"))
