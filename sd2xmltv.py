@@ -216,27 +216,26 @@ class Sd2Xmltv:
 
         p.add_episode_num_dd_progid(program.program_id)
 
-        if program.metadata is not None and program.metadata.season_episode is not None:
-            if broadcast.multipart is None:
-                p.add_episode_num_xmltv_ns(
-                    season_num=program.metadata.season_episode.season,
-                    episode_num=program.metadata.season_episode.episode,
-                    total_seasons=program.metadata.season_episode.total_seasons,
-                    total_episodes=program.metadata.season_episode.total_episodes)
-            else:
-                p.add_episode_num_xmltv_ns(
-                    season_num=program.metadata.season_episode.season,
-                    episode_num=program.metadata.season_episode.episode,
-                    total_seasons=program.metadata.season_episode.total_seasons,
-                    total_episodes=program.metadata.season_episode.total_episodes,
-                    part_num=broadcast.multipart.part_number,
-                    total_parts=broadcast.multipart.total_parts)
-        elif program.episode_num is not None:
-            if broadcast.multipart is not None:
-                p.add_episode_num_xmltv_ns(
-                    part_num=broadcast.multipart.part_number,
-                    total_parts=broadcast.multipart.total_parts)
-            p.add_episode_num_onscreen(u"E{0}".format(program.episode_num))
+        if program.is_episode_entity:
+            if program.metadata is not None and \
+                            program.metadata.season_episode is not None and \
+                            program.metadata.season_episode.has_season_episode:
+                if broadcast.multipart is None:
+                    p.add_episode_num_xmltv_ns(
+                        season_num=program.metadata.season_episode.season,
+                        episode_num=program.metadata.season_episode.episode)
+                else:
+                    p.add_episode_num_xmltv_ns(
+                        season_num=program.metadata.season_episode.season,
+                        episode_num=program.metadata.season_episode.episode,
+                        part_num=broadcast.multipart.part_number,
+                        total_parts=broadcast.multipart.total_parts)
+            elif program.episode_num is not None:
+                if broadcast.multipart is not None:
+                    p.add_episode_num_xmltv_ns(
+                        part_num=broadcast.multipart.part_number,
+                        total_parts=broadcast.multipart.total_parts)
+                p.add_episode_num_onscreen(u"E{0}".format(program.episode_num))
 
         description_elements = []
 
@@ -257,10 +256,13 @@ class Sd2Xmltv:
         elif program.original_air_date is not None:
             program_attributes.append(unicode(program.original_air_date.strftime("%Y-%m-%d")))
 
-        if program.metadata is not None and program.metadata.season_episode is not None:
-            program_attributes.append(u"S{0.season}E{0.episode}".format(program.metadata.season_episode))
-        elif program.episode_num is not None:
-            program_attributes.append(u"E{0}".format(program.episode_num))
+        if program.is_episode_entity:
+            if program.metadata is not None and \
+                            program.metadata.season_episode is not None and \
+                            program.metadata.season_episode.has_season_episode:
+                program_attributes.append(u"S{0.season}E{0.episode}".format(program.metadata.season_episode))
+            elif program.episode_num is not None:
+                program_attributes.append(u"E{0}".format(program.episode_num))
 
         if broadcast.multipart is not None:
             program_attributes.append(u"{0.part_number} of {0.total_parts}".format(broadcast.multipart))
