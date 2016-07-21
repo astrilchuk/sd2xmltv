@@ -7,6 +7,8 @@ class ProgramContentRating(object):
 
         self.code = None  # type: unicode
 
+        self.country = None  # type: unicode
+
     def __unicode__(self):  # type: () -> unicode
         return u"{0.body}: {0.code}".format(self)
 
@@ -36,6 +38,9 @@ class ProgramContentRating(object):
 
         if "code" in dct:
             program_content_rating.code = dct.pop("code")
+
+        if "country" in dct:
+            program_content_rating.country = dct.pop("country")
 
         if len(dct) != 0:
             logging.warn("Key(s) not processed for ProgramContentRating: %s", ", ".join(dct.keys()))
