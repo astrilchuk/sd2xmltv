@@ -25,6 +25,8 @@ class Station(object):
 
         self.affiliate = None  # type: unicode
 
+        self.is_radio_station = None  # type: bool
+
     def __unicode__(self):  # type: () -> unicode
         return self.name
 
@@ -77,6 +79,9 @@ class Station(object):
 
         if "affiliate" in dct:
             station.affiliate = dct.pop("affiliate")
+
+        if "isRadioStation" in dct:
+            station.is_radio_station = dct.pop("isRadioStation")
 
         if len(dct) != 0:
             logging.warn("Key(s) not processed for Station: %s", ", ".join(dct.keys()))
