@@ -237,6 +237,29 @@ class Sd2Xmltv:
                         total_parts=broadcast.multipart.total_parts)
                 p.add_episode_num_onscreen(u"E{0}".format(program.episode_num))
 
+        if program.descriptions is None:
+            self._add_programme_description(broadcast, p, program, None)
+        else:
+            for description_language in program.descriptions.languages():
+                self._add_programme_description(broadcast, p, program, description_language)
+
+        if program.movie is not None:
+            for quality_rating in program.movie.quality_ratings:
+                p.add_star_rating(quality_rating.rating, quality_rating.max_rating, quality_rating.ratings_body)
+
+        if program.is_episode_entity and not broadcast.is_new and program.original_air_date is not None:
+            p.add_previously_shown(start=program.original_air_date)
+
+        if program_artwork is not None:
+            # "Banner-L2", "Banner-L3", "Iconic", "Staple"
+            image_list = program_artwork.image_list.aspect_preference(u"3x4", u"4x3", u"2x3", u"16x9").size_preference(u"Md").category_preference(u"Poster Art", u"Box Art", u"Banner", u"Banner-L1", u"Banner-LO", u"Banner-L2", u"Logo").tier_preference(u"Series", u"Season", u"Sport", u"Team", u"Organization", u"College", None)
+            image = image_list[0] if image_list else None
+            if image is not None:
+                p.add_icon(image.url)
+
+        p.save(fp, encoding=self._encoding)
+
+    def _add_programme_description(self, broadcast, p, program, description_language):
         description_elements = []
 
         if self._episode_title_in_description and program.episode_title is not None:
@@ -283,29 +306,14 @@ class Sd2Xmltv:
         if len(program_attributes) != 0:
             description_elements.append(u"; ".join(program_attributes))
 
-        if program.descriptions is not None and u"en" in program.descriptions.languages():
-            description_elements.append(program.descriptions.get_longest_text())
+        if description_language is not None:
+            longest_text = program.descriptions.get_longest_text(language=description_language)
+            description_elements.append(longest_text)
 
         if len(program.recommendations) != 0:
-            description_elements.append(u" See also: {0}".format(u", ".join([pr.title120 for pr in program.recommendations])))
+            description_elements.append(u"See also: {0}".format(u", ".join([pr.title120 for pr in program.recommendations])))
 
-        p.add_description(u" \u2022 ".join(description_elements))
-
-        if program.movie is not None:
-            for quality_rating in program.movie.quality_ratings:
-                p.add_star_rating(quality_rating.rating, quality_rating.max_rating, quality_rating.ratings_body)
-
-        if program.is_episode_entity and not broadcast.is_new and program.original_air_date is not None:
-            p.add_previously_shown(start=program.original_air_date)
-
-        if program_artwork is not None:
-            # "Banner-L2", "Banner-L3", "Iconic", "Staple"
-            image_list = program_artwork.image_list.aspect_preference(u"3x4", u"4x3", u"2x3", u"16x9").size_preference(u"Md").category_preference(u"Poster Art", u"Box Art", u"Banner", u"Banner-L1", u"Banner-LO", u"Banner-L2", u"Logo").tier_preference(u"Series", u"Season", u"Sport", u"Team", u"Organization", u"College", None)
-            image = image_list[0] if image_list else None
-            if image is not None:
-                p.add_icon(image.url)
-
-        p.save(fp, encoding=self._encoding)
+        p.add_description(u" \u2022 ".join(description_elements), lang=description_language)
 
     def _add_channel(self, fp, channel):
         channel_id = channel.get_unique_id()
