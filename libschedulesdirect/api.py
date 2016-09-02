@@ -77,11 +77,7 @@ def get_subscribed_lineups(token):  # type: (unicode) -> Any
     :return:
     """
     logger.debug("get_lineups()")
-    response = _get("lineups", token)
-    if "response" in response and response["response"] == "NO_LINEUPS":
-        return []
-    lineups = response["lineups"]
-    return lineups
+    return _get("lineups", token)
 
 
 def add_lineup(token, lineup_id):  # type: (unicode, unicode) -> Any
@@ -232,10 +228,8 @@ def _get_response(request):  # type: (Any) -> Any
 
     try:
         response = opener.open(request)
-    except urllib2.HTTPError, error:
-        error = error.read()
-        logging.error(error)
-        return error
+    except urllib2.HTTPError, error_response:
+        response = error_response
 
     content_encoding = response.headers.get("content-encoding", "")
     content_type = response.headers.get("content-type")

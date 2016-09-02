@@ -70,7 +70,11 @@ class SchedulesDirect(object):
 
         lineups_dict = api.get_subscribed_lineups(self._token)
 
-        self._subscribed_lineups = [Lineup.from_dict(lineup_dict) for lineup_dict in lineups_dict]
+        if "response" in lineups_dict and lineups_dict["response"] == "NO_LINEUPS":
+            self._subscribed_lineups = []
+        else:
+            lineups_dict = lineups_dict["lineups"]
+            self._subscribed_lineups = [Lineup.from_dict(lineup_dict) for lineup_dict in lineups_dict]
 
         return self._subscribed_lineups
 
