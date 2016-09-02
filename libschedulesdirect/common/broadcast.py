@@ -2,7 +2,6 @@ import logging
 from collections import Iterable
 from datetime import datetime, timedelta
 from util import parse_datetime
-from programcontentrating import ProgramContentRating
 from multipartbroadcast import MultipartBroadcast
 
 
@@ -61,8 +60,6 @@ class Broadcast(object):
         self.video_properties = []  # type: List[unicode]
 
         self.multipart = None  # type: MultipartBroadcast
-
-        self.ratings = []  # type: List[ProgramContentRating]
 
         self.parental_advisory = False  # type: bool
 
@@ -174,8 +171,9 @@ class Broadcast(object):
         if "multipart" in dct:
             broadcast.multipart = MultipartBroadcast.from_dict(dct.pop("multipart"))
 
+        # ratings in Broadcast is deprecated so just pop if found
         if "ratings" in dct:
-            broadcast.ratings = ProgramContentRating.from_iterable(dct.pop("ratings"))
+            dct.pop("ratings")
 
         if "parentalAdvisory" in dct:
             broadcast.parental_advisory = dct.pop("parentalAdvisory")
