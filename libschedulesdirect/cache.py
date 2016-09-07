@@ -67,7 +67,7 @@ class SchedulesDirectCache:
         self._db.execute("""CREATE INDEX IF NOT EXISTS programs_artwork_id_index ON programs (artwork_id)""")
 
         self._db.execute("""CREATE TABLE IF NOT EXISTS schedules
-                (station_id TEXT, schedule_date DATE, last_modified TEXT, schedule_json TEXT, schedule_hash TEXT,
+                (station_id TEXT, schedule_date DATE, schedule_hash TEXT, schedule_json TEXT,
                 PRIMARY KEY (station_id, schedule_date) ON CONFLICT REPLACE)""")
 
         self._db.execute("""CREATE TABLE IF NOT EXISTS artwork
