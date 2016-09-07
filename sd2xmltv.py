@@ -366,5 +366,5 @@ def main():
         app.process()
 
 if __name__ == "__main__":
-    logging.basicConfig(format=u"%(asctime)s %(name)-35s %(levelname)-8s %(message)s", level=logging.DEBUG)
+    logging.basicConfig(format=u"%(asctime)s %(name)-35s %(levelname)-8s %(message)s", level=logging.INFO)
     main()
