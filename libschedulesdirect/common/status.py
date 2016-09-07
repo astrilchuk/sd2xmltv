@@ -22,6 +22,8 @@ class Status(object):
 
         self.code = None  # type: int
 
+        self.datetime = None  # type: datetime
+
     @classmethod
     def from_dict(cls, dct):  # type: (dict) -> Status
         """
@@ -52,6 +54,9 @@ class Status(object):
 
         if "code" in dct:
             status.code = dct.pop("code")
+
+        if "datetime" in dct:
+            status.datetime = parse_datetime(dct.pop("datetime"))
 
         if len(dct) != 0:
             logging.warn("Key(s) not processed for Status: %s", ", ".join(dct.keys()))
