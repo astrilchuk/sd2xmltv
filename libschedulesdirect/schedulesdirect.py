@@ -133,6 +133,13 @@ class SchedulesDirect(object):
             self._logger.info(u"Requesting %s programs from SchedulesDirect.", len(batch))
             programs = api.get_programs(self._token, batch)
 
+            # remove (currently) unused cast and crew properties
+            for program in programs:
+                if "cast" in program:
+                    del program["cast"]
+                if "crew" in program:
+                    del program["crew"]
+
             self._logger.info(u"Adding %s program(s) to program cache.", len(programs))
             self._cache.add_programs(programs)
 
