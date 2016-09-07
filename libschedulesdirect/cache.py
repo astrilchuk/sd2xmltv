@@ -53,6 +53,9 @@ class SchedulesDirectCache:
     def init_database(self):
         self._logger.debug(u"init_database()")
 
+        # sqlite 3.12.0+ uses default page_size of 4096 so set it for earlier versions
+        self._db.execute("""PRAGMA page_size = 4096""")
+
         self._db.execute("""CREATE TABLE IF NOT EXISTS lineups
                 (lineup_id TEXT, lineup_json TEXT, modified DATE,
                 PRIMARY KEY (lineup_id) ON CONFLICT REPLACE)""")
