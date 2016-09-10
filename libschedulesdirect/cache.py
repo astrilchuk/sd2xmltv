@@ -85,7 +85,15 @@ class SchedulesDirectCache:
         self._db.commit()
 
     def compress_database(self):
-        self._db.execute("VACUUM")
+        total_pages = self.get_total_pages()
+        free_pages = self.get_free_pages()
+
+        if free_pages / total_pages >= 0.2:
+            self._logger.info(u"Free pages (%s) greater than 20% of total pages (%s), executing vacuum.", free_pages, total_pages)
+            self._db.execute("VACUUM")
+        else:
+            self._logger.info(u"Free pages (%s) less than 20% of total pages (%s), skipping vacuum.", free_pages, total_pages)
+
         if not self._in_context:
             self._db.commit()
 
@@ -103,6 +111,12 @@ class SchedulesDirectCache:
                 return result
             else:
                 return None
+
+    def get_free_pages(self):
+        return self.select_one("PRAGMA freelist_count")[0]
+
+    def get_total_pages(self):
+        return self.select_one("PRAGMA page_count")[0]
 
     def get_lineup(self, lineup_id, modified=None):
         self._logger.debug(u"get_lineup('%s', '%s')", lineup_id, modified)
