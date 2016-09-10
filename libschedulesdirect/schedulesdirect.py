@@ -350,7 +350,7 @@ class SchedulesDirect(object):
                         for (headend, lineup) in [(headend, lineup) for (headend, lineup) in headend_lineups if headend.type == transport]:
                             options.append((headend, lineup))
                             count += 1
-                            print(u"\t{0}. {1.name} ({1.location})".format(count, lineup))
+                            print(u"\t{0}. {1.name} ({2.location})".format(count, lineup, headend))
 
                     print(u"\nChoose a lineup to add or 'x' to cancel.")
                     choice = raw_input("> ")
