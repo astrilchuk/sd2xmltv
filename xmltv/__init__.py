@@ -24,3 +24,4 @@ def indent(elem, level=0):
 from xmltvdocument import XmltvDocument
 from xmltvchannel import XmltvChannel
 from xmltvprogramme import XmltvProgramme
+from xmltvwriter import XmltvWriter

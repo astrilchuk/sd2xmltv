@@ -2,13 +2,12 @@
 # coding=utf-8
 
 import logging
-from xmltv import XmltvChannel, XmltvProgramme
+from xmltv import XmltvChannel, XmltvProgramme, XmltvWriter
 from libschedulesdirect.common import Status, Program, Broadcast, Channel, ProgramArtwork
 from libschedulesdirect.schedulesdirect import SchedulesDirect
 from optparse import OptionParser
 from datetime import datetime
 from libhdhomerun.client import HDHomeRunClient
-from gzip import GzipFile
 from itertools import islice
 
 
@@ -88,9 +87,7 @@ class Sd2Xmltv:
 
         self._sd.refresh_cache(schedule_hash_list)
 
-        with open(self._output_path, "wb") as f:
-            if self._output_path[-3:] == ".gz":
-                f = GzipFile(fileobj=f)
+        with XmltvWriter(self._output_path) as f:
 
             f.write(u"<?xml version=\"1.0\" encoding=\"{0}\" ?>\n".format(self._encoding).encode(self._encoding))
             f.write(u"<tv>\n".encode(self._encoding))
@@ -141,8 +138,6 @@ class Sd2Xmltv:
             self._logger.info(u"Added %s total programs.", total_programs_added)
 
             f.write(u"</tv>\n".encode(self._encoding))
-
-            f.close()
 
         self._logger.info(u"Finished.")
 
