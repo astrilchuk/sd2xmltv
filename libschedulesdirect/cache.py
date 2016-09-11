@@ -89,10 +89,10 @@ class SchedulesDirectCache:
         free_pages = self.get_free_pages()
 
         if free_pages / total_pages >= 0.2:
-            self._logger.info(u"Free pages (%s) greater than 20% of total pages (%s), executing vacuum.", free_pages, total_pages)
+            self._logger.info(u"Free pages (%s) greater than 20%% of total pages (%s), executing vacuum.", free_pages, total_pages)
             self._db.execute("VACUUM")
         else:
-            self._logger.info(u"Free pages (%s) less than 20% of total pages (%s), skipping vacuum.", free_pages, total_pages)
+            self._logger.info(u"Free pages (%s) less than 20%% of total pages (%s), skipping vacuum.", free_pages, total_pages)
 
         if not self._in_context:
             self._db.commit()
