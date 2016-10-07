@@ -2,6 +2,7 @@
 # coding=utf-8
 
 import logging
+import sys
 from xmltv import XmltvChannel, XmltvProgramme, XmltvWriter
 from libschedulesdirect.common import Status, Program, Broadcast, Channel, ProgramArtwork
 from libschedulesdirect.schedulesdirect import SchedulesDirect
@@ -351,6 +352,10 @@ def main():
     parser.add_option(u"-v", u"--hdhomerun", dest=u"hdhomerun", default=None, help=u"HDHomeRun IP address or 'discover' for channel filtering.")
 
     (options, args) = parser.parse_args()
+
+    if len(args) == 0:
+        parser.print_help()
+        sys.exit(0)
 
     app = Sd2Xmltv(options)
     app.login()
