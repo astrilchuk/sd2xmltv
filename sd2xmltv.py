@@ -353,7 +353,7 @@ def main():
 
     (options, args) = parser.parse_args()
 
-    if len(args) == 0:
+    if len(sys.argv[1:]) == 0:
         parser.print_help()
         sys.exit(0)
 
