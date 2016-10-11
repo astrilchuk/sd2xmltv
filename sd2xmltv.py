@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # coding=utf-8
 
+import argparse
 import logging
-import sys
 from xmltv import XmltvChannel, XmltvProgramme, XmltvWriter
 from libschedulesdirect.common import Status, Program, Broadcast, Channel, ProgramArtwork
 from libschedulesdirect.schedulesdirect import SchedulesDirect
-from optparse import OptionParser
 from datetime import datetime
 from libhdhomerun.client import HDHomeRunClient
 from itertools import islice
@@ -343,24 +342,26 @@ class Sd2Xmltv:
 
 
 def main():
-    parser = OptionParser()
-    parser.add_option(u"-u", u"--username", dest=u"username", help=u"SchedulesDirect.org username.")
-    parser.add_option(u"-p", u"--password", dest=u"password", help=u"SchedulesDirect.org password.")
-    parser.add_option(u"-o", u"--output", dest=u"output_path", default=u"./xmltv.xml", help=u"Output path and filename (use .gz to compress).")
-    parser.add_option(u"-d", u"--days", dest=u"days", type="int", default=14, help=u"Number of days to import")
-    parser.add_option(u"-m", u"--manage", dest=u"manage", action="store_true", default=False, help=u"Manage lineups")
-    parser.add_option(u"-v", u"--hdhomerun", dest=u"hdhomerun", default=None, help=u"HDHomeRun IP address or 'discover' for channel filtering.")
+    parser = argparse.ArgumentParser(prog=u"sd2xmltv.py", description=u"A Schedules Direct to xmltv converter.", add_help=False)
 
-    (options, args) = parser.parse_args()
+    required_args = parser.add_argument_group(u"required arguments")
+    required_args.add_argument(u"-u", u"--username", dest=u"username", help=u"SchedulesDirect.org username.", required=True)
+    required_args.add_argument(u"-p", u"--password", dest=u"password", help=u"SchedulesDirect.org password.", required=True)
 
-    if len(sys.argv[1:]) == 0:
-        parser.print_help()
-        sys.exit(0)
+    optional_args = parser.add_argument_group(u"optional arguments")
+    optional_args.add_argument(u"-h", u"--help", action=u"help")
+    optional_args.add_argument(u"-v", u"--version", action=u"version", version=u"sd2xmltv 2.0")
+    optional_args.add_argument(u"-o", u"--output", dest=u"output_path", default=u"./xmltv.xml", help=u"Output path and filename (use .gz to compress).")
+    optional_args.add_argument(u"-d", u"--days", dest=u"days", type=int, default=14, help=u"Number of days to import")
+    optional_args.add_argument(u"-m", u"--manage", dest=u"manage", action="store_true", default=False, help=u"Manage lineups")
+    optional_args.add_argument(u"--hdhomerun", dest=u"hdhomerun", default=None, help=u"HDHomeRun IP address or 'discover' for channel filtering.")
 
-    app = Sd2Xmltv(options)
+    args = parser.parse_args()
+
+    app = Sd2Xmltv(args)
     app.login()
 
-    if options.manage:
+    if args.manage:
         app.manage()
     else:
         app.process()
