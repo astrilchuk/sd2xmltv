@@ -13,7 +13,7 @@ from itertools import islice
 
 class Sd2Xmltv:
     def __init__(self, options):
-        self._logger = logging.getLogger(__name__)  # type: logging.Logger
+        self._logger = logging.getLogger("sd2xmltv")  # type: logging.Logger
 
         self._encoding = u"utf-8"  # type: unicode
 
