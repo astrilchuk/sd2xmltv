@@ -63,6 +63,20 @@ To create an xmltv.xml file with your current Schedules Direct lineup:
 ./sd2xmltv.py --username sdusername --password sdpassword [--output ./xmltv.xml] [--days 14] [--hdhomerun discover|ip]
 ```
 
+As a crontab job (twice a day, everyday at 6:45 and 18:45 in this example):
+
+```
+45 6,18 * * * cd ~/sdxmltv && sudo python sd2xmltv.py -u sdusername -p sdpassword -o ./xmltv.xml.gz >> sd2xmltv.log 2>&1 && gzip -c -d xmltv.xml.gz | sudo socat - unix-connect:/home/hts/.hts/tvheadend/epggrab/xmltv.sock
+```
+
+or, alternatively, write directly to xmltv.sock (sd2xmltv assumes a Unix socket if the filename ends with .sock):
+
+```
+45 6,18 * * * cd ~/sd2xmltv && sudo python sd2xmltv.py -u sdusername -p sdpassword -o /home/hts/.hts/tvheadend/epggrab/xmltv.sock >> sd2xmltv.log 2>&1
+```
+
+
+
 To manage your Schedules Direct lineup(s):
 
 ```
