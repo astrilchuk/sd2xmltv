@@ -44,7 +44,11 @@ class Sd2Xmltv:
             raise Exception(u"System is not online.")
 
         expiry_delta = self._status.account.expires - datetime.utcnow()
-        self._logger.info(u"Account will expire on %s (%s days).", self._status.account.expires, int(expiry_delta.total_seconds() // 86400))
+        expiry_days = int(expiry_delta.total_seconds() // 86400)
+        if expiry_days > 14:
+            self._logger.info(u"Account will expire on %s (%s days).", self._status.account.expires, expiry_days)
+        else:
+            self._logger.warn(u"Account will expire on %s (%s days).", self._status.account.expires, expiry_days)
 
         time_delta = datetime.utcnow() - self._status.last_data_update
         hours, minutes = int(time_delta.total_seconds() // 3600), int((time_delta.total_seconds() % 3600) // 60)
