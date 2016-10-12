@@ -22,8 +22,8 @@ These instructions are specific for TVHeadend users, but hopefully can help out 
 
 1. Configure TVHeadend to listen on a socket for xmltv (typically stored in `/home/hts/.hts/tvheadend/epggrab/xmltv.sock`)
 2. Unzip or `git clone {url}` into folder accessible to the `hts` user.
-3. `chmod +x sd2xmltv.pl`
-4. (optional) Manage lineups using sd2xmltv --manage ... (NOTE currently only works for US and Canadian lineups):
+3. `chmod +x sd2xmltv.py`
+4. (optional) Manage lineups using sd2xmltv --manage ...:
  
  ```
 ./sd2xmltv.py -u {USERNAME} -p {PASSWORD} -m
