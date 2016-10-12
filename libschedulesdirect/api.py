@@ -15,8 +15,6 @@ _base_url = "https://json.schedulesdirect.org"
 _base_uri = "/20141201/"
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARN)
-
 
 def get_token(username, password_hash):  # type: (unicode, unicode) -> Any
     """

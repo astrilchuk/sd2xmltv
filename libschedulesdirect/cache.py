@@ -11,7 +11,6 @@ from contextlib import closing
 class SchedulesDirectCache:
     def __init__(self, path):
         self._logger = logging.getLogger(__name__)
-        self._logger.setLevel(logging.INFO)
         self._path = path
         self._db = sqlite3.connect(self._path, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self._db.row_factory = sqlite3.Row
