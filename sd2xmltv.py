@@ -355,7 +355,7 @@ def main():
 
     optional_args = parser.add_argument_group(u"optional arguments")
     optional_args.add_argument(u"-h", u"--help", action=u"help")
-    optional_args.add_argument(u"-v", u"--version", action=u"version", version=u"sd2xmltv 2.0")
+    optional_args.add_argument(u"-v", u"--version", action=u"version", version=u"sd2xmltv 0.2.1")
     optional_args.add_argument(u"-o", u"--output", dest=u"output_path", default=u"./xmltv.xml", help=u"Output path and filename (use .gz to compress).")
     optional_args.add_argument(u"-d", u"--days", dest=u"days", type=int, default=14, help=u"Number of days to import")
     optional_args.add_argument(u"-m", u"--manage", dest=u"manage", action="store_true", default=False, help=u"Manage lineups")

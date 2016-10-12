@@ -193,7 +193,7 @@ def _get_request(method, uri, token=None, post_data=None):  # type: (unicode, un
     if json_data is not None:
         request.add_header("Content-Length", len(json_data))
     request.add_header("Content-Type", "application/json; charset=utf-8")
-    request.add_header("User-Agent", "sd2xmltv/0.2 (adrian.strilchuk@gmail.com)")
+    request.add_header("User-Agent", "sd2xmltv/0.2.1 (adrian.strilchuk@gmail.com)")
     request.add_header("Accept", "application/json")
     request.add_header("Accept-Encoding", "deflate, gzip")
     if token is not None:
