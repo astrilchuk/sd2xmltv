@@ -3,6 +3,7 @@
 
 import argparse
 import logging
+import logging.config
 from xmltv import XmltvChannel, XmltvProgramme, XmltvWriter
 from libschedulesdirect.common import Status, Program, Broadcast, Channel, ProgramArtwork
 from libschedulesdirect.schedulesdirect import SchedulesDirect
@@ -371,5 +372,5 @@ def main():
         app.process()
 
 if __name__ == "__main__":
-    logging.basicConfig(format=u"%(asctime)s %(name)-35s %(levelname)-8s %(message)s", level=logging.INFO)
+    logging.config.fileConfig(u"logging.ini", disable_existing_loggers=True)
     main()
