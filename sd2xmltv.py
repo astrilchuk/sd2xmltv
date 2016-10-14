@@ -372,5 +372,5 @@ def main():
         app.process()
 
 if __name__ == "__main__":
-    logging.config.fileConfig(u"logging.ini", disable_existing_loggers=True)
+    logging.config.fileConfig(u"logging.cfg", disable_existing_loggers=True)
     main()
