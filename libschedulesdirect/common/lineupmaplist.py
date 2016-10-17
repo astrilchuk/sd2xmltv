@@ -10,7 +10,7 @@ class LineupMapList(list):
         return unique((channel
                        for lineup_map in self
                        for channel in lineup_map.channels
-                       if channel_filter is None or channel.channel in channel_filter), lambda c: c.get_unique_id())
+                       if channel_filter is None or channel_filter.pass_channel(lineup_map.lineup, channel)), lambda c: c.get_unique_id())
 
     def unique_stations(self, channel_filter=None):
         return unique((channel.station

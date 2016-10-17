@@ -8,8 +8,8 @@ from xmltv import XmltvChannel, XmltvProgramme, XmltvWriter
 from libschedulesdirect.common import Status, Program, Broadcast, Channel, ProgramArtwork
 from libschedulesdirect.schedulesdirect import SchedulesDirect
 from datetime import datetime
-from libhdhomerun.client import HDHomeRunClient
 from itertools import islice
+from utils.channelfilters import FileChannelFilter, HdhomerunChannelFilter, MetaChannelFilter
 
 
 class Sd2Xmltv:
@@ -27,6 +27,10 @@ class Sd2Xmltv:
         self._days = options.days  # type: int
 
         self._hdhomerun_ip = options.hdhomerun  # type: unicode
+
+        self._enable_filter = options.filter  # type: bool
+
+        self._filter_path = options.filter_path  # type: unicode
 
         self._episode_title_in_description = False  # type: bool
 
@@ -66,24 +70,19 @@ class Sd2Xmltv:
             self._logger.info(u"Not subscribed to any lineups, exiting.")
             return
 
-        channel_filter = None
-
-        if self._hdhomerun_ip is not None:
-            if self._hdhomerun_ip == "discover":
-                client = HDHomeRunClient()
-            else:
-                client = HDHomeRunClient(self._hdhomerun_ip.split(","))
-
-            client.init_device_list()
-
-            client.init_hdhomerun_lineups()
-
-            channel_filter = client.get_channel_list()
-
         self._logger.info(u"Getting station/channel mappings for %s lineups.", len(self._status.lineups))
         lineup_map_list = self._sd.get_lineup_map_list(self._status.lineups)
 
-        # self._filter = self.read_filter(lineup_map_list)
+        # Setup channel filter(s)
+        channel_filter = MetaChannelFilter()
+
+        if self._hdhomerun_ip is not None:
+            cf = HdhomerunChannelFilter(self._hdhomerun_ip)
+            channel_filter.add_channel_filter(cf)
+
+        if self._enable_filter:
+            cf = FileChannelFilter(config_path=self._filter_path, lineup_map_list=lineup_map_list)
+            channel_filter.add_channel_filter(cf)
         
         station_ids = [station.station_id for station in lineup_map_list.unique_stations(channel_filter)]
 
@@ -360,6 +359,8 @@ def main():
     optional_args.add_argument(u"-d", u"--days", dest=u"days", type=int, default=14, help=u"Number of days to import")
     optional_args.add_argument(u"-m", u"--manage", dest=u"manage", action="store_true", default=False, help=u"Manage lineups")
     optional_args.add_argument(u"--hdhomerun", dest=u"hdhomerun", default=None, help=u"HDHomeRun IP address or 'discover' for channel filtering.")
+    optional_args.add_argument(u"--filter", dest=u"filter", action="store_true", default=False, help=u"Enable file-based channel filtering.")
+    optional_args.add_argument(u"--filter-path", dest=u"filter_path", default=u"./filter.cfg", help=u"File path for channel filter configuration.")
 
     args = parser.parse_args()
 
