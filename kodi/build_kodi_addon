@@ -54,6 +54,7 @@ cp -r ../libschedulesdirect/* tools.module.sd2xmltv/libschedulesdirect/
 mkdir tools.module.sd2xmltv/xmltv/
 cp -r ../xmltv/* tools.module.sd2xmltv/xmltv/
 cp ../*.py tools.module.sd2xmltv/
+cp ../logging.cfg tools.module.sd2xmltv/
 mkdir tools.module.sd2xmltv/libhdhomerun/
 cp -r ../libhdhomerun/* tools.module.sd2xmltv/libhdhomerun/
 #  add the license files to keep everything on the up-n-up
