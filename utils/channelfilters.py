@@ -2,6 +2,7 @@
 
 import ConfigParser
 from libhdhomerun.client import HDHomeRunClient
+import os.path
 
 
 class MetaChannelFilter(object):
@@ -68,8 +69,9 @@ class FileChannelFilter(object):
             self._dirty = True
 
     def _load_config(self, config_path):
-        with open(config_path, "rb") as fp:
-            self._config.readfp(fp)
+        if os.path.isfile(config_path):
+            with open(config_path, "rb") as fp:
+                self._config.readfp(fp)
 
         self._dirty = False
 
