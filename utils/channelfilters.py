@@ -57,7 +57,7 @@ class FileChannelFilter(object):
 
             for channel in lineup_map.channels:
                 channel_option = channel.channel + u"_" + channel.station.station_id
-                channel_option_value = channel.station.name
+                channel_option_value = channel.station.name.encode('ascii','replace')
 
                 if not self._config.has_option(config_section_new, channel_option) and \
                         not self._config.has_option(config_section_include, channel_option) and \
@@ -89,6 +89,7 @@ class FileChannelFilter(object):
             fp.write("; Note: New channels are not automatically moved from the [<headend>-new] section.\n")
             fp.write("; Cut and paste newly found channels under [<headend>-include] or [<headend>-exclude].\n")
             fp.write("\n")
+            dir(self._config)
             self._config.write(fp)
 
         self._dirty = False
