@@ -1,6 +1,7 @@
 # coding=utf-8
 
 import ConfigParser
+import codecs
 from libhdhomerun.client import HDHomeRunClient
 import os.path
 
@@ -57,7 +58,7 @@ class FileChannelFilter(object):
 
             for channel in lineup_map.channels:
                 channel_option = channel.channel + u"_" + channel.station.station_id
-                channel_option_value = channel.station.name.encode('ascii','replace')
+                channel_option_value = channel.station.name.encode('utf-8')
 
                 if not self._config.has_option(config_section_new, channel_option) and \
                         not self._config.has_option(config_section_include, channel_option) and \
@@ -70,7 +71,7 @@ class FileChannelFilter(object):
 
     def _load_config(self, config_path):
         if os.path.isfile(config_path):
-            with open(config_path, "rb") as fp:
+            with codecs.open(config_path, "rb", encoding='utf-8') as fp:
                 self._config.readfp(fp)
 
         self._dirty = False
