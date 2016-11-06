@@ -1,7 +1,7 @@
 # coding=utf-8
 
 import ConfigParser
-import codecs
+import io
 from libhdhomerun.client import HDHomeRunClient
 import os.path
 
@@ -71,7 +71,7 @@ class FileChannelFilter(object):
 
     def _load_config(self, config_path):
         if os.path.isfile(config_path):
-            with codecs.open(config_path, "rb", encoding='utf-8') as fp:
+            with io.open(config_path, 'r', encoding='utf-8') as fp:
                 self._config.readfp(fp)
 
         self._dirty = False
@@ -90,7 +90,6 @@ class FileChannelFilter(object):
             fp.write("; Note: New channels are not automatically moved from the [<headend>-new] section.\n")
             fp.write("; Cut and paste newly found channels under [<headend>-include] or [<headend>-exclude].\n")
             fp.write("\n")
-            dir(self._config)
             self._config.write(fp)
 
         self._dirty = False
