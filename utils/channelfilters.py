@@ -80,7 +80,7 @@ class FileChannelFilter(object):
         if not self._dirty and not force_save:
             return
 
-        with open(config_path, "wb") as fp:
+        with io.open(config_path, "wb") as fp:
             fp.write("; sd2xmltv channel filter\n")
             fp.write("; \n")
             fp.write("; Move channels to include under [<headend>-include].\n")
